@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +18,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 interface Startup {
   id: string;
@@ -84,7 +83,6 @@ const Startups = () => {
         throw new Error("Failed to approve startup");
       }
       
-      // Update the local state
       setStartups(startups.map(startup => 
         startup.id === id ? { ...startup, status: 'approved' } : startup
       ));
@@ -96,7 +94,6 @@ const Startups = () => {
     }
   };
 
-  // Filter startups based on search and filter
   const filteredStartups = startups.filter((startup) => {
     const matchesSearch = 
       startup.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -111,7 +108,6 @@ const Startups = () => {
     return matchesSearch && matchesFilter;
   });
 
-  // Get all unique stages for filter
   const stages = [...new Set(startups.map(startup => startup.stage))];
 
   const getStatusBadge = (status: string) => {
