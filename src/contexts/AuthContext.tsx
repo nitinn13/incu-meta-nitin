@@ -20,6 +20,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Mock admin data for demonstration purposes
+const MOCK_ADMIN: Admin = {
+  id: '1',
+  name: 'Demo Admin',
+  email: 'admin@incumeta.com',
+  token: 'demo-token-xyz',
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,30 +49,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/admin/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      
+      // For demo purposes: Accept any email with password "demo123"
+      if (password === 'demo123') {
+        const adminData = {
+          ...MOCK_ADMIN,
+          email: email, // Use the provided email
+        };
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        setAdmin(adminData);
+        localStorage.setItem('admin', JSON.stringify(adminData));
+        toast.success('Logged in successfully');
+      } else {
+        throw new Error('Invalid credentials. Use any email with password: demo123');
       }
-
-      const adminData = {
-        id: data.admin.id,
-        name: data.admin.name,
-        email: data.admin.email,
-        token: data.token,
-      };
-
-      setAdmin(adminData);
-      localStorage.setItem('admin', JSON.stringify(adminData));
-      toast.success('Logged in successfully');
     } catch (error) {
       console.error('Login error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to login');
@@ -77,21 +75,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/admin/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      toast.success('Registered successfully, please login');
+      
+      // For demo purposes, just show success message
+      toast.success('Registered successfully, please login with: demo123');
+      
     } catch (error) {
       console.error('Registration error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to register');
