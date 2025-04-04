@@ -19,17 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-
-interface Startup {
-  id: string;
-  name: string;
-  logo?: string;
-  industry: string;
-  stage: string;
-  description: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-}
+import fetchWithMock, { Startup } from "@/utils/mockApiService";
 
 const Startups = () => {
   const { admin } = useAuth();
@@ -43,18 +33,13 @@ const Startups = () => {
       if (!admin?.token) return;
       
       try {
-        const response = await fetch("http://localhost:3000/api/admin/all-startups", {
+        const response = await fetchWithMock("http://localhost:3000/api/admin/all-startups", {
           headers: {
             Authorization: `Bearer ${admin.token}`,
           },
         });
         
-        if (!response.ok) {
-          throw new Error("Failed to fetch startups");
-        }
-        
-        const data = await response.json();
-        setStartups(data.startups || []);
+        setStartups(response.startups || []);
       } catch (error) {
         console.error("Error fetching startups:", error);
         toast.error("Failed to load startups");
@@ -70,7 +55,7 @@ const Startups = () => {
     if (!admin?.token) return;
     
     try {
-      const response = await fetch("http://localhost:3000/api/admin/approve-startup", {
+      await fetchWithMock("http://localhost:3000/api/admin/approve-startup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -78,10 +63,6 @@ const Startups = () => {
         },
         body: JSON.stringify({ startupId: id }),
       });
-      
-      if (!response.ok) {
-        throw new Error("Failed to approve startup");
-      }
       
       setStartups(startups.map(startup => 
         startup.id === id ? { ...startup, status: 'approved' } : startup

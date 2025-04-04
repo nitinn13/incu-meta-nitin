@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Plus, Trash2, Edit } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import fetchWithMock, { Announcement } from "@/utils/mockApiService";
 import {
   Dialog,
   DialogContent,
@@ -24,14 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface Announcement {
-  id: string;
-  title: string;
-  description: string;
-  type: 'funding' | 'government' | 'news' | 'other';
-  createdAt: string;
-}
-
 const Announcements = () => {
   const { admin } = useAuth();
   const [search, setSearch] = useState("");
@@ -46,21 +38,9 @@ const Announcements = () => {
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
-      if (!admin?.token) return;
-      
       try {
-        const response = await fetch("http://localhost:3000/api/user/announcements", {
-          headers: {
-            Authorization: `Bearer ${admin.token}`,
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch announcements");
-        }
-        
-        const data = await response.json();
-        setAnnouncements(data.announcements || []);
+        const response = await fetchWithMock("http://localhost:3000/api/user/announcements");
+        setAnnouncements(response.announcements || []);
       } catch (error) {
         console.error("Error fetching announcements:", error);
         toast.error("Failed to load announcements");
@@ -70,7 +50,7 @@ const Announcements = () => {
     };
 
     fetchAnnouncements();
-  }, [admin?.token]);
+  }, []);
 
   const handleCreateAnnouncement = async () => {
     if (!admin?.token) return;
@@ -81,7 +61,7 @@ const Announcements = () => {
     }
     
     try {
-      const response = await fetch("http://localhost:3000/api/admin/create-announcement", {
+      const response = await fetchWithMock("http://localhost:3000/api/admin/create-announcement", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,21 +70,9 @@ const Announcements = () => {
         body: JSON.stringify(newAnnouncement),
       });
       
-      if (!response.ok) {
-        throw new Error("Failed to create announcement");
-      }
-      
-      const data = await response.json();
-      
       // Add the new announcement to the list
       setAnnouncements([
-        {
-          id: data.announcement.id,
-          title: newAnnouncement.title,
-          description: newAnnouncement.description,
-          type: newAnnouncement.type as any,
-          createdAt: new Date().toISOString(),
-        },
+        response.announcement,
         ...announcements,
       ]);
       
@@ -123,7 +91,7 @@ const Announcements = () => {
     if (!admin?.token) return;
     
     try {
-      const response = await fetch("http://localhost:3000/api/admin/remove-announcement", {
+      await fetchWithMock("http://localhost:3000/api/admin/remove-announcement", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -131,10 +99,6 @@ const Announcements = () => {
         },
         body: JSON.stringify({ announcementId: id }),
       });
-      
-      if (!response.ok) {
-        throw new Error("Failed to delete announcement");
-      }
       
       // Remove the announcement from the list
       setAnnouncements(announcements.filter(a => a.id !== id));

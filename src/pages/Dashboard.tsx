@@ -4,15 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, Users, Calendar, CalendarClock, Bell, LineChart } from "lucide-react";
-
-interface Startup {
-  id: string;
-  name: string;
-  logo?: string;
-  industry: string;
-  stage: string;
-  description: string;
-}
+import fetchWithMock, { Startup, Event, Announcement, Meeting } from "@/utils/mockApiService";
+import { toast } from "sonner";
 
 interface StartupSummary {
   total: number;
@@ -40,6 +33,9 @@ const Dashboard = () => {
   const { admin } = useAuth();
   const [search, setSearch] = useState("");
   const [startups, setStartups] = useState<Startup[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [startupSummary, setStartupSummary] = useState<StartupSummary>({
     total: 0,
@@ -58,61 +54,83 @@ const Dashboard = () => {
     total: 0,
   });
 
-  // Fetch startups data
+  // Fetch all data
   useEffect(() => {
-    const fetchStartups = async () => {
+    const fetchData = async () => {
       if (!admin?.token) return;
       
       try {
-        const response = await fetch("http://localhost:3000/api/admin/all-startups", {
-          headers: {
-            Authorization: `Bearer ${admin.token}`,
-          },
-        });
+        setLoading(true);
         
-        if (!response.ok) {
-          throw new Error("Failed to fetch startups");
-        }
+        const [startupsResponse, eventsResponse, meetingsResponse, announcementsResponse] = await Promise.all([
+          fetchWithMock("http://localhost:3000/api/admin/all-startups", {
+            headers: {
+              Authorization: `Bearer ${admin.token}`,
+            },
+          }),
+          fetchWithMock("http://localhost:3000/api/user/events"),
+          fetchWithMock("http://localhost:3000/api/admin/all-schedules", {
+            headers: {
+              Authorization: `Bearer ${admin.token}`,
+            },
+          }),
+          fetchWithMock("http://localhost:3000/api/user/announcements")
+        ]);
         
-        const data = await response.json();
-        setStartups(data.startups || []);
+        // Set data
+        setStartups(startupsResponse.startups || []);
+        setEvents(eventsResponse.events || []);
+        setMeetings(meetingsResponse.meetings || []);
+        setAnnouncements(announcementsResponse.announcements || []);
         
         // Calculate startup summary
         const stages: {[key: string]: number} = {};
-        data.startups.forEach((startup: Startup) => {
+        startupsResponse.startups.forEach((startup: Startup) => {
           stages[startup.stage] = (stages[startup.stage] || 0) + 1;
         });
         
         setStartupSummary({
-          total: data.startups.length,
+          total: startupsResponse.startups.length,
           stages,
         });
         
+        // Calculate event summary
+        const currentDate = new Date();
+        const upcomingEvents = eventsResponse.events.filter((event: Event) => 
+          new Date(event.date) > currentDate
+        );
+        
+        setEventSummary({
+          upcoming: upcomingEvents.length,
+          total: eventsResponse.events.length,
+        });
+        
+        // Calculate meeting summary
+        const upcomingMeetings = meetingsResponse.meetings.filter((meeting: Meeting) => {
+          const meetingDate = new Date(`${meeting.date}T${meeting.time}`);
+          return meetingDate > currentDate;
+        });
+        
+        setMeetingSummary({
+          upcoming: upcomingMeetings.length,
+          total: meetingsResponse.meetings.length,
+        });
+        
+        // Calculate announcement summary
+        setAnnouncementSummary({
+          active: announcementsResponse.announcements.length,
+          total: announcementsResponse.announcements.length,
+        });
+        
       } catch (error) {
-        console.error("Error fetching startups:", error);
+        console.error("Error fetching dashboard data:", error);
+        toast.error("Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
     };
 
-    // For now, let's mock the other summary data
-    // In a real app, you would fetch this from the API
-    setEventSummary({
-      upcoming: 5,
-      total: 12,
-    });
-    
-    setMeetingSummary({
-      upcoming: 3,
-      total: 8,
-    });
-    
-    setAnnouncementSummary({
-      active: 4,
-      total: 10,
-    });
-
-    fetchStartups();
+    fetchData();
   }, [admin?.token]);
 
   // Filter startups based on search

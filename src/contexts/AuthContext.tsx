@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { toast } from 'sonner';
+import fetchWithMock from '@/utils/mockApiService';
 
 interface Admin {
   id: string;
@@ -19,14 +20,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Mock admin data for demonstration purposes
-const MOCK_ADMIN: Admin = {
-  id: '1',
-  name: 'Demo Admin',
-  email: 'admin@incumeta.com',
-  token: 'demo-token-xyz',
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [admin, setAdmin] = useState<Admin | null>(null);
@@ -50,19 +43,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // For demo purposes: Accept any email with password "demo123"
-      if (password === 'demo123') {
-        const adminData = {
-          ...MOCK_ADMIN,
-          email: email, // Use the provided email
-        };
-
-        setAdmin(adminData);
-        localStorage.setItem('admin', JSON.stringify(adminData));
-        toast.success('Logged in successfully');
-      } else {
-        throw new Error('Invalid credentials. Use any email with password: demo123');
-      }
+      const response = await fetchWithMock('http://localhost:3000/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      setAdmin(response.admin);
+      localStorage.setItem('admin', JSON.stringify(response.admin));
+      toast.success('Logged in successfully');
+      
     } catch (error) {
       console.error('Login error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to login');
@@ -76,7 +68,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // For demo purposes, just show success message
+      await fetchWithMock('http://localhost:3000/api/admin/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+      
       toast.success('Registered successfully, please login with: demo123');
       
     } catch (error) {
