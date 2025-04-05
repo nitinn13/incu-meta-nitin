@@ -88,7 +88,61 @@ adminRouter.get('/profile', adminMiddleware, async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
-
+adminRouter.get("/dashboard-stats", async (req, res) => {
+    try {
+      const totalStartups = await userModel.countDocuments();
+      const approvedStartups = await userModel.countDocuments({ isApproved: true });
+      const pendingStartups = await userModel.countDocuments({ isApproved: false });
+      const totalRevenue = await userModel.aggregate([{ $group: { _id: null, total: { $sum: "$revenue" } } }]);
+      const totalTeamSize = await userModel.aggregate([{ $group: { _id: null, total: { $sum: "$teamSize" } } }]);
+      const largestTeam = await userModel.findOne().sort({ teamSize: -1 }).select("name teamSize");
+      const topRevenueStartup = await userModel.findOne().sort({ revenue: -1 }).select("name revenue");
+  
+      const totalEvents = await eventModel.countDocuments();
+      const upcomingEvents = await eventModel.countDocuments({ createdAt: { $gte: new Date() } });
+      const totalAnnouncements = await announcementModel.countDocuments();
+      const announcementsLast30Days = await announcementModel.countDocuments({
+        createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+      });
+      const totalMeetings = await scheduleModel.countDocuments();
+      const meetingsToday = await scheduleModel.countDocuments({
+        date: { $gte: new Date(new Date().setHours(0, 0, 0, 0)), $lt: new Date(new Date().setHours(23, 59, 59, 999)) }
+      });
+      const startupsThisMonth = await userModel.countDocuments({
+        createdAt: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
+      });
+      const totalAdmins = await adminModel.countDocuments();
+  
+      const fundingStageBreakdown = await userModel.aggregate([
+        { $group: { _id: "$fundingStage", count: { $sum: 1 } } }
+      ]);
+  
+      res.json({
+        totalStartups,
+        approvedStartups,
+        pendingStartups,
+        totalRevenue: totalRevenue[0]?.total || 0,
+        totalTeamSize: totalTeamSize[0]?.total || 0,
+        largestTeam,
+        topRevenueStartup,
+        totalEvents,
+        upcomingEvents,
+        totalAnnouncements,
+        announcementsLast30Days,
+        totalMeetings,
+        meetingsToday,
+        startupsThisMonth,
+        totalAdmins,
+        fundingStageBreakdown
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Error fetching dashboard stats", error: err.message });
+    }
+  });
+  
+  
+  
 
 adminRouter.get('/all-startups', adminMiddleware, async (req, res) => {
     try {

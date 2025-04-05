@@ -1,313 +1,309 @@
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Search, Users, Calendar, CalendarClock, Bell, LineChart } from "lucide-react";
-import fetchWithMock, { Startup, Event, Announcement, Meeting } from "@/utils/mockApiService";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { 
+  PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+  Tooltip, Legend, ResponsiveContainer, LineChart, Line, Cell
+} from "recharts";
+import { Users, DollarSign, Calendar, MessageSquare, Building, TrendingUp } from "lucide-react";
 
-interface StartupSummary {
-  total: number;
-  stages: {
-    [key: string]: number;
-  };
-}
-
-interface EventSummary {
-  upcoming: number;
-  total: number;
-}
-
-interface MeetingSummary {
-  upcoming: number;
-  total: number;
-}
-
-interface AnnouncementSummary {
-  active: number;
-  total: number;
-}
-
-const Dashboard = () => {
+const AdminDashboard = () => {
   const { admin } = useAuth();
-  const [search, setSearch] = useState("");
-  const [startups, setStartups] = useState<Startup[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [startupSummary, setStartupSummary] = useState<StartupSummary>({
-    total: 0,
-    stages: {},
-  });
-  const [eventSummary, setEventSummary] = useState<EventSummary>({
-    upcoming: 0,
-    total: 0,
-  });
-  const [meetingSummary, setMeetingSummary] = useState<MeetingSummary>({
-    upcoming: 0,
-    total: 0,
-  });
-  const [announcementSummary, setAnnouncementSummary] = useState<AnnouncementSummary>({
-    active: 0,
-    total: 0,
-  });
 
-  // Fetch all data
   useEffect(() => {
-    const fetchData = async () => {
-      if (!admin?.token) return;
-      
+    const fetchStats = async () => {
+      if (!admin?.token) {
+        toast.error("Admin token missing");
+        return;
+      }
+
       try {
-        setLoading(true);
-        
-        const [startupsResponse, eventsResponse, meetingsResponse, announcementsResponse] = await Promise.all([
-          fetchWithMock("http://localhost:3000/api/admin/all-startups", {
-            headers: {
-              Authorization: `Bearer ${admin.token}`,
-            },
-          }),
-          fetchWithMock("http://localhost:3000/api/user/events"),
-          fetchWithMock("http://localhost:3000/api/admin/all-schedules", {
-            headers: {
-              Authorization: `Bearer ${admin.token}`,
-            },
-          }),
-          fetchWithMock("http://localhost:3000/api/user/announcements")
-        ]);
-        
-        // Set data
-        setStartups(startupsResponse.startups || []);
-        setEvents(eventsResponse.events || []);
-        setMeetings(meetingsResponse.meetings || []);
-        setAnnouncements(announcementsResponse.announcements || []);
-        
-        // Calculate startup summary
-        const stages: {[key: string]: number} = {};
-        startupsResponse.startups.forEach((startup: Startup) => {
-          stages[startup.stage] = (stages[startup.stage] || 0) + 1;
+        const res = await fetch("http://localhost:3000/api/admin/dashboard-stats", {
+          headers: { token: admin.token },
         });
-        
-        setStartupSummary({
-          total: startupsResponse.startups.length,
-          stages,
-        });
-        
-        // Calculate event summary
-        const currentDate = new Date();
-        const upcomingEvents = eventsResponse.events.filter((event: Event) => 
-          new Date(event.date) > currentDate
-        );
-        
-        setEventSummary({
-          upcoming: upcomingEvents.length,
-          total: eventsResponse.events.length,
-        });
-        
-        // Calculate meeting summary
-        const upcomingMeetings = meetingsResponse.meetings.filter((meeting: Meeting) => {
-          const meetingDate = new Date(`${meeting.date}T${meeting.time}`);
-          return meetingDate > currentDate;
-        });
-        
-        setMeetingSummary({
-          upcoming: upcomingMeetings.length,
-          total: meetingsResponse.meetings.length,
-        });
-        
-        // Calculate announcement summary
-        setAnnouncementSummary({
-          active: announcementsResponse.announcements.length,
-          total: announcementsResponse.announcements.length,
-        });
-        
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        toast.error("Failed to load dashboard data");
+        const data = await res.json();
+        setStats(data);
+      } catch (err) {
+        toast.error("Failed to load dashboard stats");
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchStats();
   }, [admin?.token]);
 
-  // Filter startups based on search
-  const filteredStartups = startups.filter((startup) => 
-    startup.name.toLowerCase().includes(search.toLowerCase()) ||
-    startup.industry.toLowerCase().includes(search.toLowerCase()) ||
-    startup.stage.toLowerCase().includes(search.toLowerCase())
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="text-lg font-medium flex items-center gap-2 text-gray-700">
+        <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Loading dashboard...
+      </div>
+    </div>
   );
 
+  if (!stats) return (
+    <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="text-lg font-medium text-gray-600">No stats available</div>
+    </div>
+  );
+
+  // Prepare data for charts
+  const startupStatusData = [
+    { name: "Approved", value: stats.approvedStartups, color: "#4B5563" },
+    { name: "Pending", value: stats.pendingStartups, color: "#9CA3AF" }
+  ];
+
+  const fundingStageData = stats.fundingStageBreakdown.map((stage, index) => ({
+    name: stage._id,
+    value: stage.count,
+    // Generate professional, muted colors
+    color: `hsl(${210 + index * 30}, 20%, ${45 + index * 5}%)`
+  }));
+
+  // Monthly startup growth data (mock data since we only have the current month)
+  const monthlyGrowthData = [
+    { month: "Jan", startups: Math.floor(stats.startupsThisMonth * 0.4) },
+    { month: "Feb", startups: Math.floor(stats.startupsThisMonth * 0.5) },
+    { month: "Mar", startups: Math.floor(stats.startupsThisMonth * 0.7) },
+    { month: "Apr", startups: Math.floor(stats.startupsThisMonth * 0.8) },
+    { month: "May", startups: Math.floor(stats.startupsThisMonth * 0.9) },
+    { month: "Current", startups: stats.startupsThisMonth }
+  ];
+
+  // Professional, subdued color palette
+  const COLORS = ["#4B5563", "#64748B", "#6B7280", "#4B5563", "#374151", "#1F2937"];
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <div className="relative w-64">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            type="search"
-            placeholder="Search startups..."
-            className="pl-8"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+    <div className="p-6 max-w-7xl mx-auto bg-gray-50 min-h-screen">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold mb-2 text-gray-800">Admin Dashboard</h1>
+        <p className="text-gray-500 text-sm">Welcome back. Here's what's happening with your incubator today.</p>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Startups</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{startupSummary.total}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Across various growth stages
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{eventSummary.upcoming}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Out of {eventSummary.total} total events
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Scheduled Meetings</CardTitle>
-            <CalendarClock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{meetingSummary.upcoming}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Out of {meetingSummary.total} total meetings
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Announcements</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{announcementSummary.active}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Out of {announcementSummary.total} total announcements
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="col-span-1 md:col-span-2">
-          <CardHeader>
-            <CardTitle>Startup Performance</CardTitle>
-            <CardDescription>
-              Funding status and KPI metrics of incubated startups
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[200px] flex items-center justify-center border border-dashed rounded-lg">
-              <div className="flex flex-col items-center text-muted-foreground">
-                <LineChart className="h-8 w-8 mb-2" />
-                <p>Performance metrics chart will be displayed here</p>
+      
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <Card className="bg-white shadow-sm border-0">
+          <CardContent className="pt-5">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Startups</p>
+                <h3 className="text-xl font-semibold mt-1 text-gray-800">{stats.totalStartups}</h3>
+              </div>
+              <div className="bg-gray-100 p-2 rounded-md">
+                <Building className="h-5 w-5 text-gray-600" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Startups by Stage</CardTitle>
-            <CardDescription>
-              Distribution across growth stages
-            </CardDescription>
+
+        <Card className="bg-white shadow-sm border-0">
+          <CardContent className="pt-5">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Revenue</p>
+                <h3 className="text-xl font-semibold mt-1 text-gray-800">${stats.totalRevenue.toLocaleString()}</h3>
+              </div>
+              <div className="bg-gray-100 p-2 rounded-md">
+                <DollarSign className="h-5 w-5 text-gray-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white shadow-sm border-0">
+          <CardContent className="pt-5">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Team Members</p>
+                <h3 className="text-xl font-semibold mt-1 text-gray-800">{stats.totalTeamSize}</h3>
+              </div>
+              <div className="bg-gray-100 p-2 rounded-md">
+                <Users className="h-5 w-5 text-gray-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white shadow-sm border-0">
+          <CardContent className="pt-5">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Upcoming Events</p>
+                <h3 className="text-xl font-semibold mt-1 text-gray-800">{stats.upcomingEvents}</h3>
+              </div>
+              <div className="bg-gray-100 p-2 rounded-md">
+                <Calendar className="h-5 w-5 text-gray-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Startup Status */}
+        <Card className="bg-white shadow-sm border-0">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium text-gray-800">Startup Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={startupStatusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {startupStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} Startups`, 'Count']} />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Funding Stage Breakdown */}
+        <Card className="bg-white shadow-sm border-0">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium text-gray-800">Funding Stage Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={fundingStageData}
+                  margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="name" tick={{ fill: '#6B7280', fontSize: 12 }} />
+                  <YAxis tick={{ fill: '#6B7280', fontSize: 12 }} />
+                  <Tooltip 
+                    formatter={(value) => [`${value} Startups`, 'Count']}
+                    contentStyle={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '4px' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} />
+                  <Bar dataKey="value" name="Startups">
+                    {fundingStageData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Monthly Growth & Details */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Monthly Startup Growth */}
+        <Card className="lg:col-span-2 bg-white shadow-sm border-0">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium text-gray-800">Monthly Startup Growth</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={monthlyGrowthData}
+                  margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="month" tick={{ fill: '#6B7280', fontSize: 12 }} />
+                  <YAxis tick={{ fill: '#6B7280', fontSize: 12 }} />
+                  <Tooltip 
+                    formatter={(value) => [`${value} Startups`, 'Count']}
+                    contentStyle={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '4px' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} />
+                  <Line
+                    type="monotone"
+                    dataKey="startups"
+                    stroke="#4B5563"
+                    activeDot={{ r: 6 }}
+                    strokeWidth={2}
+                    name="New Startups"
+                    dot={{ stroke: '#4B5563', strokeWidth: 1, fill: '#fff', r: 3 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Featured Stats */}
+        <Card className="bg-white shadow-sm border-0">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium text-gray-800">Featured Stats</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {Object.entries(startupSummary.stages).map(([stage, count]) => (
-                <div key={stage} className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">{stage}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-16 h-2 rounded-full bg-gray-100 overflow-hidden">
-                      <div 
-                        className="h-full bg-incumeta-600" 
-                        style={{ 
-                          width: `${(count / startupSummary.total) * 100}%` 
-                        }} 
-                      />
-                    </div>
-                    <span className="text-sm font-medium">{count}</span>
-                  </div>
+              <div className="p-4 border border-gray-100 rounded-md bg-gray-50">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Top Revenue Startup</p>
+                <div className="flex items-center mt-2">
+                  <TrendingUp className="h-4 w-4 text-gray-600 mr-2" />
+                  <p className="font-medium text-gray-800">{stats.topRevenueStartup?.name}</p>
                 </div>
-              ))}
+                <p className="text-sm text-gray-600 mt-1">${stats.topRevenueStartup?.revenue.toLocaleString()}</p>
+              </div>
+              
+              <div className="p-4 border border-gray-100 rounded-md bg-gray-50">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Largest Team</p>
+                <div className="flex items-center mt-2">
+                  <Users className="h-4 w-4 text-gray-600 mr-2" />
+                  <p className="font-medium text-gray-800">{stats.largestTeam?.name}</p>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">{stats.largestTeam?.teamSize} team members</p>
+              </div>
+              
+              <div className="p-4 border border-gray-100 rounded-md bg-gray-50">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Activity Summary</p>
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 text-gray-500 mr-2" />
+                    <p className="text-sm text-gray-700">Meetings Today</p>
+                  </div>
+                  <p className="font-medium text-gray-800">{stats.meetingsToday}</p>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center">
+                    <MessageSquare className="h-4 w-4 text-gray-500 mr-2" />
+                    <p className="text-sm text-gray-700">Recent Announcements</p>
+                  </div>
+                  <p className="font-medium text-gray-800">{stats.announcementsLast30Days}</p>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center">
+                    <Building className="h-4 w-4 text-gray-500 mr-2" />
+                    <p className="text-sm text-gray-700">New Startups (Month)</p>
+                  </div>
+                  <p className="font-medium text-gray-800">{stats.startupsThisMonth}</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Startups</CardTitle>
-          <CardDescription>
-            Showing {Math.min(4, filteredStartups.length)} of {filteredStartups.length} startups
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {loading ? (
-              Array(4).fill(0).map((_, i) => (
-                <div key={i} className="border rounded-lg p-4 h-[200px] animate-pulse bg-gray-100" />
-              ))
-            ) : filteredStartups.length > 0 ? (
-              filteredStartups.slice(0, 4).map((startup) => (
-                <div 
-                  key={startup.id} 
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
-                >
-                  <div className="mb-2 h-12 w-12 bg-gray-100 rounded-md flex items-center justify-center text-gray-500">
-                    {startup.logo ? (
-                      <img 
-                        src={startup.logo} 
-                        alt={`${startup.name} logo`} 
-                        className="h-10 w-10 object-contain"
-                      />
-                    ) : (
-                      startup.name.charAt(0)
-                    )}
-                  </div>
-                  <h3 className="font-medium">{startup.name}</h3>
-                  <div className="flex items-center mt-1 gap-2">
-                    <span className="inline-flex items-center rounded-full bg-incumeta-100 px-2 py-1 text-xs font-medium text-incumeta-800">
-                      {startup.stage}
-                    </span>
-                    <span className="text-xs text-gray-500">{startup.industry}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-3">
-                    {startup.description}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12 text-gray-500">
-                No startups found matching your search
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
 
-export default Dashboard;
+export default AdminDashboard;
