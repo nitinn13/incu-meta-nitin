@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,8 +26,8 @@ import {
 
 const Events = () => {
   const { admin } = useAuth();
+  const { events, loading, deleteEvent, refreshEvents } = useEvents();
   const [search, setSearch] = useState("");
-  const { events, loading, createEvent, deleteEvent } = useEvents();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -38,38 +37,53 @@ const Events = () => {
     type: "workshop",
   });
 
-  // useEffect(() => {
-  //   const fetchEvents = async () => {
-  //     try {
-  //       const response = await fetchWithMock("http://localhost:3000/api/user/events");
-  //       setEvents(response.events || []);
-  //     } catch (error) {
-  //       console.error("Error fetching events:", error);
-  //       toast.error("Failed to load events");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchEvents();
-  // }, []);
-
   const handleCreateEvent = async () => {
-    if (!newEvent.title || !newEvent.description || !newEvent.date || !newEvent.location) {
+    if (
+      !newEvent.title.trim() ||
+      !newEvent.description.trim() ||
+      !newEvent.location.trim()
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
-  
-    await createEvent(newEvent);
-    setNewEvent({ title: "", description: "", date: "", location: "", type: "workshop" });
-    setIsDialogOpen(false);
+
+    try {
+      const response = await fetch("http://localhost:3000/api/admin/create-event", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          token: `${admin?.token}`,
+        },
+        body: JSON.stringify({
+          title: newEvent.title,
+          description: newEvent.description,
+          location: newEvent.location,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to create event");
+      }
+
+      toast.success("Event created successfully");
+
+      // ✅ Refetch updated events list
+      await refreshEvents();
+
+      setNewEvent({ title: "", description: "", date: "", location: "", type: "workshop" });
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      toast.error("Failed to create event");
+    }
   };
 
   const handleDeleteEvent = async (id: string) => {
     await deleteEvent(id);
+    await refreshEvents(); // Optionally refresh after delete as well
   };
 
-  // Filter events based on search
   const filteredEvents = events.filter((event) =>
     event.title.toLowerCase().includes(search.toLowerCase()) ||
     event.description.toLowerCase().includes(search.toLowerCase()) ||
@@ -77,17 +91,17 @@ const Events = () => {
     event.type.toLowerCase().includes(search.toLowerCase())
   );
 
-  const sortedEvents = [...filteredEvents].sort((a, b) => 
+  const sortedEvents = [...filteredEvents].sort((a, b) =>
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 

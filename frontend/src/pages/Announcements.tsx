@@ -47,25 +47,48 @@ const Announcements = () => {
 
 
   const handleCreateAnnouncement = async () => {
-    if (!newAnnouncement.title || !newAnnouncement.description) {
+    if (
+      !newAnnouncement.title.trim() ||
+      !newAnnouncement.description.trim()
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
-    
+  
     try {
-      await contextCreateAnnouncement({
-        title: newAnnouncement.title,
-        message: newAnnouncement.description,
-        type: newAnnouncement.type
+      const response = await fetch("http://localhost:3000/api/admin/create-announcement", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          token: `${admin?.token}`,
+        },
+        body: JSON.stringify({
+          title: newAnnouncement.title,
+          message: newAnnouncement.description,
+          type: newAnnouncement.type,
+        }),
       });
-      
+  
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to create announcement");
+      }
+  
+      toast.success("Announcement created successfully");
+  
+      // Reset form
       setNewAnnouncement({ title: "", description: "", type: "news" });
       setIsDialogOpen(false);
+  
+      //  Fetch updated announcements
+      fetchAnnouncements();
     } catch (error) {
-      // Error is already handled in context
+      console.error("Error creating announcement:", error);
+      toast.error("Failed to create announcement");
     }
   };
-
+  
+  
   const handleDeleteAnnouncement = async (id: string) => {
     try {
       await contextDeleteAnnouncement(id);
