@@ -105,7 +105,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         sidebarOpen ? "md:ml-64" : "ml-0"
       )}>
         {/* Header */}
-        <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-end px-4 md:px-8">
+        <header className="bg-[#F5F9FF] h-16 border-b border-gray-200 flex items-center justify-end px-4 md:px-8">
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
