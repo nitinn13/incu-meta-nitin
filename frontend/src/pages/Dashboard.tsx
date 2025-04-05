@@ -84,7 +84,7 @@ const AdminDashboard = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gray-50 min-h-screen">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold mb-2 text-gray-800">Admin Dashboard</h1>
+        <h1 className="text-2xl font-semibold mb-2 text-gray-800">Incubator Dashboard</h1>
         <p className="text-gray-500 text-sm">Welcome back. Here's what's happening with your incubator today.</p>
       </div>
       
