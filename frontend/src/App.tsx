@@ -16,6 +16,7 @@ import Meetings from "@/pages/Meetings";
 import RecordMOM from "@/pages/RecordMOM";
 import Requests from "@/pages/Requests";
 import NotFound from "@/pages/NotFound";
+import LandingPage from "@/pages/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -27,11 +28,12 @@ const App = () => (
         <SonnerToaster />
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<LandingPage/>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
             <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Dashboard />} />
+              {/* <Route path="/" element={<Dashboard />} /> */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/startups" element={<Startups />} />
               <Route path="/announcements" element={<Announcements />} />
