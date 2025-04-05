@@ -91,12 +91,28 @@ const Announcements = () => {
   
   const handleDeleteAnnouncement = async (id: string) => {
     try {
-      await contextDeleteAnnouncement(id);
+      const response = await fetch("http://localhost:3000/api/admin/remove-announcement", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          token: `${admin?.token}`, // Make sure `admin` is available from context
+        },
+        body: JSON.stringify({ announcementId: id }),
+      });
+  
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to delete announcement");
+      }
+  
+      toast.success("Announcement deleted");
+      fetchAnnouncements(); // Make sure this is defined to refresh the UI
     } catch (error) {
-      // Error is already handled in context
+      console.error("Error deleting announcement:", error);
+      toast.error("Failed to delete announcement");
     }
   };
-
+  
   // Filter announcements based on search
   const filteredAnnouncements = announcements.filter((announcement) =>
     announcement.title.toLowerCase().includes(search.toLowerCase()) ||
