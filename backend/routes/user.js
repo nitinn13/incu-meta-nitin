@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const userRouter = Router();
-const { userModel, eventModel, announcementModel } = require("../db");
+const { userModel, eventModel, announcementModel, scheduleModel } = require("../db");
 const bcrypt = require("bcrypt");
 const { z } = require("zod");
 const jwt = require("jsonwebtoken");
@@ -112,6 +112,16 @@ userRouter.get('/announcements', async (req, res) => {
     }    
     catch(err){
         res.status(500).json({message: "Error fetching announcements"})
+    }
+});
+
+userRouter.get('/my-schedules', userMiddleware, async (req, res) => {
+    try{
+        const schedules = await scheduleModel.find({startupId: req.userId});
+        res.json({schedules});
+    }
+    catch(err){
+        res.status(500).json({message: "Error fetching schedules"})
     }
 });
 

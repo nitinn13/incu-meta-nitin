@@ -51,7 +51,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     { path: '/startups', label: 'Incubated Startups', icon: <Rocket size={20} /> },
     { path: '/record-mom', label: 'Record MOM', icon: <FileEdit size={20} /> },
     { path: '/events', label: 'Upcoming Events', icon: <Calendar size={20} /> },
-    { path: '/meetings', label: 'Scheduled Meetings', icon: <CalendarClock size={20} /> },
+    { path: '/schedules', label: 'Scheduled Meetings', icon: <CalendarClock size={20} /> },
     { path: '/requests', label: 'Requests', icon: <HelpCircle size={20} /> },
   ];
 
@@ -105,7 +105,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         sidebarOpen ? "md:ml-64" : "ml-0"
       )}>
         {/* Header */}
-        <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-end px-4 md:px-8">
+        <header className="bg-[#F5F9FF] h-16 border-b border-gray-200 flex items-center justify-end px-4 md:px-8">
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
