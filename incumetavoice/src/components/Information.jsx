@@ -10,6 +10,10 @@ export default function Information(props) {
     const [translating, setTranslating] = useState(null)
     console.log(output)
 
+    const handleRedirect = () => {
+        window.location.href = 'http://localhost:5175';
+    };
+
     const worker = useRef()
 
     useEffect(() => {
@@ -102,6 +106,12 @@ export default function Information(props) {
                 <button onClick={handleDownload} title="Download" className='bg-white  hover:text-blue-500 duration-200 text-blue-300 px-2 aspect-square grid place-items-center rounded'>
                     <i className="fa-solid fa-download"></i>
                 </button>
+                <button
+                onClick={handleRedirect}
+                className="mt-6 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm sm:text-base transition-all shadow-md"
+            >
+                Summary
+            </button>
             </div>
         </main>
     )

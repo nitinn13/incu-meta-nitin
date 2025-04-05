@@ -52,7 +52,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { path: '/announcements', label: 'Announcements', icon: <Bell size={18} /> },
     { path: '/startups', label: 'Incubated Startups', icon: <Rocket size={18} /> },
-    { path: '/record-mom', label: 'Record MOM', icon: <FileEdit size={18} /> },
+    { path: 'http://localhost:5174/', label: 'Record MOM', icon: <FileEdit size={18} /> },
     { path: '/events', label: 'Upcoming Events', icon: <Calendar size={18} /> },
     { path: '/schedules', label: 'Scheduled Meetings', icon: <CalendarClock size={18} /> },
     { path: '/requests', label: 'Requests', icon: <HelpCircle size={18} /> },
