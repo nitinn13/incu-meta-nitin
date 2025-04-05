@@ -15,8 +15,9 @@ type Startup = {
   name: string;
   email: string;
   isApproved: boolean;
-  idea: string;
+  fundingStage: string;
 };
+
 
 const Requests = () => {
   const { admin } = useAuth();
@@ -145,8 +146,8 @@ const Requests = () => {
           <ScrollArea className="h-[calc(100vh-12rem)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
               {startups.map((startup) => (
-                <Card 
-                  key={startup._id} 
+                <Card
+                  key={startup._id}
                   className="hover:shadow-xl transition duration-300 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50"
                 >
                   <CardHeader>
@@ -162,23 +163,26 @@ const Requests = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="mb-6">
-                      <p className="text-sm leading-relaxed">
-                        {startup.idea || "No idea description provided"}
-                      </p>
+                      {/* <p className="text-sm text-muted-foreground">
+                        {startup.fundingStage === "seed" && <Badge variant="secondary">Seed Stage</Badge>}
+                        {startup.fundingStage === "series_a" && <Badge>Series A</Badge>}
+                        {startup.fundingStage === "bootstrapped" && <Badge variant="outline">Bootstrapped</Badge>}
+                      </p> */}
+
                     </div>
                     <div className="flex gap-3">
-                      <Button 
+                      <Button
                         className="flex-1"
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          handleApproveClick(startup); 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApproveClick(startup);
                         }}
                       >
                         <CheckCircleIcon className="w-4 h-4 mr-2" />
                         Approve
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="flex-1"
                         onClick={() => navigate(`/startup/${startup._id}`)}
                       >
