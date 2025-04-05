@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { AnnouncementsProvider } from './contexts/AnnouncementContext.tsx';
+import { EventsProvider } from './contexts/EventsContext.tsx';
 import App from './App.tsx'
 import './index.css'
 import { AuthProvider } from './contexts/AuthContext.tsx';
@@ -7,7 +8,9 @@ import { AuthProvider } from './contexts/AuthContext.tsx';
 createRoot(document.getElementById("root")!).render(
     <AuthProvider>
         <AnnouncementsProvider>
-        <App />
+            <EventsProvider>
+                <App />
+            </EventsProvider>
         </AnnouncementsProvider>
     </AuthProvider>
 );

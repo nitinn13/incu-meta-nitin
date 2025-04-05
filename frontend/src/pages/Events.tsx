@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Plus, Trash2, CalendarDays } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import fetchWithMock, { Event } from "@/utils/mockApiService";
+import { useEvents } from "@/contexts/EventsContext";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +28,7 @@ import {
 const Events = () => {
   const { admin } = useAuth();
   const [search, setSearch] = useState("");
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { events, loading, createEvent, deleteEvent } = useEvents();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -39,78 +38,35 @@ const Events = () => {
     type: "workshop",
   });
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await fetchWithMock("http://localhost:3000/api/user/events");
-        setEvents(response.events || []);
-      } catch (error) {
-        console.error("Error fetching events:", error);
-        toast.error("Failed to load events");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchEvents = async () => {
+  //     try {
+  //       const response = await fetchWithMock("http://localhost:3000/api/user/events");
+  //       setEvents(response.events || []);
+  //     } catch (error) {
+  //       console.error("Error fetching events:", error);
+  //       toast.error("Failed to load events");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchEvents();
-  }, []);
+  //   fetchEvents();
+  // }, []);
 
   const handleCreateEvent = async () => {
-    if (!admin?.token) return;
-    
     if (!newEvent.title || !newEvent.description || !newEvent.date || !newEvent.location) {
       toast.error("Please fill in all required fields");
       return;
     }
-    
-    try {
-      const response = await fetchWithMock("http://localhost:3000/api/admin/create-event", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${admin.token}`,
-        },
-        body: JSON.stringify(newEvent),
-      });
-      
-      // Add the new event to the list
-      setEvents([
-        response.event,
-        ...events,
-      ]);
-      
-      // Reset form and close dialog
-      setNewEvent({ title: "", description: "", date: "", location: "", type: "workshop" });
-      setIsDialogOpen(false);
-      
-      toast.success("Event created successfully");
-    } catch (error) {
-      console.error("Error creating event:", error);
-      toast.error("Failed to create event");
-    }
+  
+    await createEvent(newEvent);
+    setNewEvent({ title: "", description: "", date: "", location: "", type: "workshop" });
+    setIsDialogOpen(false);
   };
 
   const handleDeleteEvent = async (id: string) => {
-    if (!admin?.token) return;
-    
-    try {
-      await fetchWithMock("http://localhost:3000/api/admin/remove-event", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${admin.token}`,
-        },
-        body: JSON.stringify({ eventId: id }),
-      });
-      
-      // Remove the event from the list
-      setEvents(events.filter(e => e.id !== id));
-      
-      toast.success("Event deleted successfully");
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      toast.error("Failed to delete event");
-    }
+    await deleteEvent(id);
   };
 
   // Filter events based on search
