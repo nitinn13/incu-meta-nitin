@@ -1,5 +1,3 @@
-// src/pages/Requests.tsx
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { InboxIcon, Users2Icon, CheckCircleIcon, XCircleIcon } from "lucide-react";
 
 type Startup = {
   _id: string;
@@ -83,52 +85,145 @@ const Requests = () => {
     }
   };
 
-  if (loading) return <div>Loading requests...</div>;
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {[1, 2, 3, 4].map((i) => (
+        <Card key={i} className="hover:shadow-xl transition">
+          <CardHeader>
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-20 w-full mb-4" />
+            <Skeleton className="h-9 w-24" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  if (loading) return (
+    <div className="p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-6 w-12" />
+      </div>
+      <LoadingSkeleton />
+    </div>
+  );
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">
-        Approval Requests {startups.length > 0 && <span className="text-sm text-gray-500">({startups.length})</span>}
-      </h1>
-
-      {startups.length === 0 ? (
-        <p>No pending requests.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {startups.map((startup) => (
-            <Card key={startup._id} className="hover:shadow-xl transition relative">
-              <div
-                className="absolute inset-0 z-0 cursor-pointer"
-                onClick={() => navigate(`/startup/${startup._id}`)}
-              />
-              <CardHeader>
-                <CardTitle>{startup.name}</CardTitle>
-                <CardDescription>{startup.email}</CardDescription>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <p className="mb-4">{startup.idea || "No idea description"}</p>
-                <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleApproveClick(startup); }}>
-                  Approve
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+    <div className="min-h-screen bg-gray-50/30 dark:bg-gray-900/30">
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <InboxIcon className="w-8 h-8 text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold">Approval Requests</h1>
+              <p className="text-muted-foreground">
+                {startups.length} pending {startups.length === 1 ? 'request' : 'requests'}
+              </p>
+            </div>
+          </div>
+          <Badge variant="secondary" className="flex items-center gap-2">
+            <Users2Icon className="w-4 h-4" />
+            Total Requests: {startups.length}
+          </Badge>
         </div>
-      )}
 
-      {/* Approval Confirmation Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Approval</DialogTitle>
-          </DialogHeader>
-          <p>Are you sure you want to approve <strong>{selectedStartup?.name}</strong>?</p>
-          <DialogFooter className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={approveStartup}>Approve</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {startups.length === 0 ? (
+          <Card className="text-center p-12">
+            <CardContent className="space-y-4">
+              <div className="flex justify-center">
+                <CheckCircleIcon className="w-16 h-16 text-green-500" />
+              </div>
+              <h3 className="text-xl font-semibold">All Caught Up!</h3>
+              <p className="text-muted-foreground">There are no pending approval requests at the moment.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <ScrollArea className="h-[calc(100vh-12rem)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+              {startups.map((startup) => (
+                <Card 
+                  key={startup._id} 
+                  className="hover:shadow-xl transition duration-300 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50"
+                >
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xl">{startup.name}</CardTitle>
+                      <Badge variant="outline" className="text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30">
+                        Pending
+                      </Badge>
+                    </div>
+                    <CardDescription className="flex items-center gap-2">
+                      {startup.email}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-6">
+                      <p className="text-sm leading-relaxed">
+                        {startup.idea || "No idea description provided"}
+                      </p>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button 
+                        className="flex-1"
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          handleApproveClick(startup); 
+                        }}
+                      >
+                        <CheckCircleIcon className="w-4 h-4 mr-2" />
+                        Approve
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => navigate(`/startup/${startup._id}`)}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirm Startup Approval</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-4">
+              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                <div className="flex-shrink-0">
+                  <Users2Icon className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-medium">{selectedStartup?.name}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedStartup?.email}</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This action will approve the startup and grant them access to the platform. This cannot be undone.
+              </p>
+            </div>
+            <DialogFooter className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <XCircleIcon className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+              <Button onClick={approveStartup}>
+                <CheckCircleIcon className="w-4 h-4 mr-2" />
+                Confirm Approval
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };
