@@ -17,6 +17,7 @@ import RecordMOM from "@/pages/RecordMOM";
 import Requests from "@/pages/Requests";
 import NotFound from "@/pages/NotFound";
 import LandingPage from "@/pages/LandingPage";
+import StartupDetails from "./pages/StartupDetails";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
               {/* <Route path="/" element={<Dashboard />} /> */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/startups" element={<Startups />} />
+              <Route path="/startups/:id" element={<StartupDetails/>} />
               <Route path="/announcements" element={<Announcements />} />
               <Route path="/events" element={<Events />} />
               <Route path="/meetings" element={<Meetings />} />
