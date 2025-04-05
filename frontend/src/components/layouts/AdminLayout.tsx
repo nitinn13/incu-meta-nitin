@@ -51,7 +51,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     { path: '/startups', label: 'Incubated Startups', icon: <Rocket size={20} /> },
     { path: '/record-mom', label: 'Record MOM', icon: <FileEdit size={20} /> },
     { path: '/events', label: 'Upcoming Events', icon: <Calendar size={20} /> },
-    { path: '/meetings', label: 'Scheduled Meetings', icon: <CalendarClock size={20} /> },
+    { path: '/schedules', label: 'Scheduled Meetings', icon: <CalendarClock size={20} /> },
     { path: '/requests', label: 'Requests', icon: <HelpCircle size={20} /> },
   ];
 
