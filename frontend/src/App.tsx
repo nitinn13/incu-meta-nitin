@@ -20,6 +20,7 @@ import LandingPage from "@/pages/LandingPage";
 import StartupDetails from "./pages/StartupDetails";
 import Schedules from "./pages/Schedules";
 import ScheduleDetails from "./pages/ScheduleDetails";
+import Apply from "./pages/Apply";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage/>} />
+            <Route path="/apply" element={<Apply/>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
