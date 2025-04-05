@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const adminRouter = Router();
-const { adminModel, eventModel, announcementModel, userModel } = require("../db");
+const { adminModel, eventModel, announcementModel, userModel, scheduleModel } = require("../db");
 const bcrypt = require("bcrypt");
 const { z } = require("zod");
 const jwt = require("jsonwebtoken");
@@ -93,7 +93,6 @@ adminRouter.get('/profile', adminMiddleware, async (req, res) => {
 adminRouter.get('/all-startups', adminMiddleware, async (req, res) => {
     try {
         const startups = await userModel.find({});
-        
         res.json({startups});
     } 
     catch(err){
@@ -172,7 +171,39 @@ adminRouter.post('/remove-announcement', adminMiddleware, async (req, res) => {
 });
 
 
+adminRouter.post('/schedule-meeting', adminMiddleware, async (req, res) => {
+    try{
+        const {startupId, date, time, description} = req.body;
+        await scheduleModel.create({startupId, date, time, description});
+        res.status(201).json({message: "Schedule created"});
+    }
+    catch(err){
+        res.status(500).json({message: "Error creating schedule"})
+    }
+});
 
+adminRouter.get('/all-schedules', adminMiddleware, async (req, res) => {
+    try {
+        const schedules = await scheduleModel.find({}).populate('startupId', 'name');
+        res.json({ schedules });
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching schedules" });
+    }
+});
+adminRouter.get('/schedule/:id', adminMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const schedule = await scheduleModel.findById(id);
+
+        if (!schedule) {
+            return res.status(404).json({ message: "Schedule not found" });
+        }
+
+        res.json({ schedule });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
 
 module.exports = {
     adminRouter

@@ -18,6 +18,8 @@ import Requests from "@/pages/Requests";
 import NotFound from "@/pages/NotFound";
 import LandingPage from "@/pages/LandingPage";
 import StartupDetails from "./pages/StartupDetails";
+import Schedules from "./pages/Schedules";
+import ScheduleDetails from "./pages/ScheduleDetails";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +43,8 @@ const App = () => (
               <Route path="/announcements" element={<Announcements />} />
               <Route path="/events" element={<Events />} />
               <Route path="/meetings" element={<Meetings />} />
+              <Route path="/schedules" element={<Schedules />} />
+              <Route path="schedule/:id" element={<ScheduleDetails/>} />
               <Route path="/record-mom" element={<RecordMOM />} />
               <Route path="/requests" element={<Requests />} />
             </Route>
