@@ -3,7 +3,7 @@ import { MessageTypes } from './presets'
 
 class MyTranscriptionPipeline {
     static task = 'automatic-speech-recognition'
-    static model = 'openai/whisper-tiny.en'
+    static model = 'openai/whisper-small'
     static instance = null
 
     static async getInstance(progress_callback = null) {
@@ -35,13 +35,13 @@ async function transcribe(audio) {
 
     sendLoadingMessage('success')
 
-    const stride_length_s = 5
+    const stride_length_s = 3
 
     const generationTracker = new GenerationTracker(pipeline, stride_length_s)
     await pipeline(audio, {
         top_k: 0,
         do_sample: false,
-        chunk_length: 30,
+        chunk_length: 20,
         stride_length_s,
         return_timestamps: true,
         callback_function: generationTracker.callbackFunction.bind(generationTracker),
@@ -91,7 +91,7 @@ class GenerationTracker {
 
     callbackFunction(beams) {
         this.callbackFunctionCounter += 1
-        if (this.callbackFunctionCounter % 10 !== 0) {
+        if (this.callbackFunctionCounter % 3 !== 0) {
             return
         }
 

@@ -76,14 +76,11 @@ export default function Information(props) {
         })
     }
 
-
-
-
     return (
-        <main className='flex-1  p-4 flex flex-col gap-3 text-center sm:gap-4 justify-center pb-20 max-w-prose w-full mx-auto'>
+        <main className='flex-1 p-4 flex flex-col gap-3 text-center sm:gap-4 justify-center pb-20 max-w-prose w-full mx-auto'>
             <h1 className='font-semibold text-4xl sm:text-5xl md:text-6xl whitespace-nowrap'>Your <span className='text-blue-400 bold'>Transcription</span></h1>
 
-            <div className='grid grid-cols-2 sm:mx-auto bg-white  rounded overflow-hidden items-center p-1 blueShadow border-[2px] border-solid border-blue-300'>
+            <div className='grid grid-cols-2 sm:mx-auto bg-white rounded overflow-hidden items-center p-1 blueShadow border-[2px] border-solid border-blue-300'>
                 <button onClick={() => setTab('transcription')} className={'px-4 rounded duration-200 py-1 ' + (tab === 'transcription' ? ' bg-blue-300 text-white' : ' text-blue-400 hover:text-blue-600')}>Transcription</button>
                 <button onClick={() => setTab('translation')} className={'px-4 rounded duration-200 py-1  ' + (tab === 'translation' ? ' bg-blue-300 text-white' : ' text-blue-400 hover:text-blue-600')}>Translation</button>
             </div>
@@ -99,19 +96,21 @@ export default function Information(props) {
                     <Translation {...props} toLanguage={toLanguage} translating={translating} textElement={textElement} setTranslating={setTranslating} setTranslation={setTranslation} setToLanguage={setToLanguage} generateTranslation={generateTranslation} />
                 )}
             </div>
-            <div className='flex items-center gap-4 mx-auto '>
-                <button onClick={handleCopy} title="Copy" className='bg-white  hover:text-blue-500 duration-200 text-blue-300 px-2 aspect-square grid place-items-center rounded'>
+            <div className='flex items-center gap-4 mx-auto'>
+                <button onClick={handleCopy} title="Copy" className='bg-white hover:text-blue-500 duration-200 text-blue-300 px-2 aspect-square grid place-items-center rounded'>
                     <i className="fa-solid fa-copy"></i>
                 </button>
-                <button onClick={handleDownload} title="Download" className='bg-white  hover:text-blue-500 duration-200 text-blue-300 px-2 aspect-square grid place-items-center rounded'>
+                <button onClick={handleDownload} title="Download" className='bg-white hover:text-blue-500 duration-200 text-blue-300 px-2 aspect-square grid place-items-center rounded'>
                     <i className="fa-solid fa-download"></i>
                 </button>
-                <button
-                onClick={handleRedirect}
-                className="mt-6 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm sm:text-base transition-all shadow-md"
-            >
-                Summary
-            </button>
+                <button 
+                    onClick={handleRedirect} 
+                    title="View Summary"
+                    className='bg-blue-400 hover:bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 transition-all shadow-md'
+                >
+                    <i className="fa-solid fa-list-ul"></i>
+                    <span>Summary</span>
+                </button>
             </div>
         </main>
     )

@@ -25,12 +25,12 @@ export default function Transcribing(props) {
                 ))}
             </div>
 
-            <button
+            {/* <button
                 onClick={handleRedirect}
                 className="mt-6 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm sm:text-base transition-all shadow-md"
             >
                 Summary
-            </button>
+            </button> */}
         </div>
     );
 }
