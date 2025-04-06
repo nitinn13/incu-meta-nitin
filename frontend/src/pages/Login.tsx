@@ -28,7 +28,7 @@ const Login = () => {
       setIsSubmitting(true);
       await login(email, password);
       toast.success("Login successful!");
-      navigate("/dashboard");
+      navigate("/admin/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
       // Error is handled in the context
@@ -56,6 +56,8 @@ const Login = () => {
           </h1>
           
         </motion.div>
+
+        <Link to="/startup/login">Login as a Startup</Link>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

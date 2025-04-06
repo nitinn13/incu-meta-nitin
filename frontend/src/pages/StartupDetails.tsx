@@ -141,7 +141,7 @@ const StartupDetails = () => {
     <div className="p-6 max-w-7xl mx-auto bg-gray-50 min-h-screen">
       {/* Navigation Header */}
       <div className="mb-6">
-        <Link to="/startups" className="text-sm text-gray-600 hover:text-gray-900 flex items-center mb-4">
+        <Link to="/admin/startups" className="text-sm text-gray-600 hover:text-gray-900 flex items-center mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" /> Back to Startups
         </Link>
         

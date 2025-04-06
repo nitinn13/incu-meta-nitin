@@ -160,7 +160,7 @@ const Startups = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredStartups.map((startup) => (
-            <Link key={startup._id} to={`/startups/${startup._id}`} className="block">
+            <Link key={startup._id} to={`/admin/startups/${startup._id}`} className="block">
               <Card className="h-full border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <CardHeader className="pb-2 border-b border-gray-100">
                   <div className="flex justify-between items-start">
