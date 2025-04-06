@@ -40,7 +40,40 @@ userRouter.post("/apply", async (req, res) => {
         res.status(500).json({ message: "Error creating user", error: err.message });
     }
 });
-
+userRouter.get("/dashboard-stats", userMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+  
+      const user = await userModel.findById(userId).select("name email industry fundingStage revenue teamSize");
+  
+      if (!user) {
+        return res.status(404).json({ message: "Startup not found" });
+      }
+  
+      const [totalEvents, totalAnnouncements, upcomingEvent] = await Promise.all([
+        eventModel.countDocuments(),
+        announcementModel.countDocuments(),
+        eventModel.findOne({}).sort({ date: 1 }).limit(1), // optional, based on your schema
+      ]);
+  
+      res.json({
+        name: user.name,
+        email: user.email,
+        industry: user.industry,
+        fundingStage: user.fundingStage,
+        revenue: user.revenue,
+        teamSize: user.teamSize,
+        accountCreated: user._id.getTimestamp(),
+        totalEvents,
+        totalAnnouncements,
+        upcomingEvent: upcomingEvent ? upcomingEvent.title : "No upcoming event"
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Error fetching dashboard stats", error: err.message });
+    }
+  });
+  
 // User Login
 userRouter.post("/login", async (req, res) => {
     try {
