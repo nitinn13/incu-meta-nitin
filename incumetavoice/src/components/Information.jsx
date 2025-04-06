@@ -11,7 +11,7 @@ export default function Information(props) {
     console.log(output)
 
     const handleRedirect = () => {
-        window.location.href = 'http://localhost:5175';
+        window.location.href = 'http://localhost:5173';
     };
 
     const worker = useRef()
