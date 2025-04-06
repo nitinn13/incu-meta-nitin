@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { toast } from "sonner";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
-import { useUserAuth } from "@/contexts/StartupAuthContext";
+import { useStartupAuth } from "@/contexts/StartupAuthContext";
 
 const StartupLogin = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +16,7 @@ const StartupLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login } = useUserAuth();
+  const { login } = useStartupAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {

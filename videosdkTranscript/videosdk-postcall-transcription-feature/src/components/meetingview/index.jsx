@@ -30,7 +30,7 @@ export const MeetingView = ({ meetingId, onMeetingLeft }) => {
       stopRecording();
     } else if (recordingState === RECORDING_STOPPED) {
       startRecording(
-        'https://webhook.site/a5301d95-c4b2-4679-ad09-8800f04231cb',
+        'https://webhook.site/3ed00756-0811-4ed3-be4d-1011936f6a7c',
         null,
         null,
         {

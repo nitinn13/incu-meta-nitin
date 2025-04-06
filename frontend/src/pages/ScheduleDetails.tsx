@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-
+import styled from 'styled-components';
 type Schedule = {
   _id: string;
   startupId: {
@@ -80,9 +80,62 @@ const ScheduleDetails = () => {
             <strong>Created At:</strong> {new Date(schedule.createdAt).toLocaleString()}
           </p>
         </CardContent>
+        {/* <a href="https://localhost:5000/" target="_blank" rel="noreferrer"></a> */}
+        <div className="m-4 flex justify-center" >
+          
+            <VCButton />
+          
+        </div>
+
       </Card>
     </div>
   );
 };
+const VCButton = () => {
+  return (
+    <StyledWrapper>
+      <a href="http://localhost:5000/" target="_blank" rel="noreferrer">
+      <button> Start Video Chat
+      </button>
+      </a>
+      
+    </StyledWrapper>
+  );
+}
+
+const StyledWrapper = styled.div`
+  button {
+   border: none;
+   color: #fff;
+   background-image: linear-gradient(30deg, #0400ff, #4ce3f7);
+   border-radius: 20px;
+   background-size: 100% auto;
+   font-family: inherit;
+   font-size: 17px;
+   padding: 0.6em 1.5em;
+  }
+
+  button:hover {
+   background-position: right center;
+   background-size: 200% auto;
+   -webkit-animation: pulse 2s infinite;
+   animation: pulse512 1.5s infinite;
+  }
+
+  @keyframes pulse512 {
+   0% {
+    box-shadow: 0 0 0 0 #05bada66;
+   }
+
+   70% {
+    box-shadow: 0 0 0 10px rgb(218 103 68 / 0%);
+   }
+
+   100% {
+    box-shadow: 0 0 0 0 rgb(218 103 68 / 0%);
+   }
+  }`;
+
+
 
 export default ScheduleDetails;

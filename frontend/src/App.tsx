@@ -30,6 +30,7 @@ import Apply from "@/pages/Apply";
 import StartupDashboard from "@/pages/Startups/StartupDashboard";
 import StartupLogin from "@/pages/StartupLogin";
 import { StartupLayout } from "./components/layouts/StartupLayout";
+import StartupEvents from "./pages/Startups/StartupEvents";
 
 
 const queryClient = new QueryClient();
@@ -61,17 +62,17 @@ const App = () => (
                 <Route path="/admin/record-mom" element={<RecordMOM />} />
                 <Route path="/admin/requests" element={<Requests />} />
                 <Route path="/admin/schedules" element={<Schedules />} />
-                <Route path="/admin/schedules/:id" element={<ScheduleDetails />} />
+                <Route path="/admin/schedule/:id" element={<ScheduleDetails />} />
               </Route>
 
               {/* Startup Protected Routes */}
               <Route element={<StartupProtectedRoute />}>
-                <Route element={<StartupLayout/>}>
+                {/* <Route element={<StartupLayout/>}> */}
                   <Route path="/startup/dashboard" element={<StartupDashboard />} />
                   <Route path="/startup/announcements" element={<Announcements />} />
-                  <Route path="/startup/events" element={<Events />} />
+                  <Route path="/startup/events" element={<StartupEvents />} />
                   <Route path="/startup/schedules" element={<Schedules />} />
-                </Route>
+                {/* </Route> */}
               </Route>
 
               {/* Catch-all Route */}

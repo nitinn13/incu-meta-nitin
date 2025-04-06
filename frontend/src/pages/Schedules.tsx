@@ -342,7 +342,7 @@ const Schedules = () => {
         className={`overflow-hidden transition hover:shadow-md cursor-pointer group ${
           isPast ? "bg-slate-50" : "bg-white"
         }`}
-        onClick={() => navigate(`/schedule/${schedule._id}`)}
+        onClick={() => navigate(`/admin/schedule/${schedule._id}`)}
       >
         <CardHeader className={`pb-2 border-b ${isPast ? "bg-slate-50" : "bg-slate-50/50"}`}>
           <div className="flex justify-between items-start">

@@ -2,21 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Bell, 
-  Calendar, 
-  CalendarClock, 
-  LogOut, 
-  Menu, 
-  X, 
-  UserCircle 
+import {
+  LayoutDashboard,
+  Bell,
+  Calendar,
+  CalendarClock,
+  LogOut,
+  Menu,
+  X,
+  UserCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useUserAuth } from '@/contexts/StartupAuthContext';
+import { useStartupAuth } from '@/contexts/StartupAuthContext';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -31,7 +31,7 @@ interface StartupLayoutProps {
 }
 
 export const StartupLayout = ({ children }: StartupLayoutProps) => {
-  const { user, logout } = useUserAuth();
+  const { startup, logout } = useStartupAuth(); // ✅ fixed from `user` to `startup`
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -63,9 +63,11 @@ export const StartupLayout = ({ children }: StartupLayoutProps) => {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className={`bg-white border-r ${sidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300`}>
+      <aside className={`bg-white border-r transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-16'}`}>
         <div className="flex items-center justify-between p-4 border-b">
-          <span className={`text-lg font-bold ${!sidebarOpen && 'hidden'}`}>Startup Panel</span>
+          <span className={`font-bold text-lg transition-opacity ${sidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
+            Startup Panel
+          </span>
           <Button variant="ghost" size="icon" onClick={toggleSidebar}>
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </Button>
@@ -75,12 +77,10 @@ export const StartupLayout = ({ children }: StartupLayoutProps) => {
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                  isActive ? 'bg-blue-100 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
-                )
-              }
+              className={({ isActive }) => cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-gray-100 transition-colors',
+                isActive && 'bg-gray-100 text-primary'
+              )}
             >
               {item.icon}
               {sidebarOpen && item.label}
@@ -90,36 +90,34 @@ export const StartupLayout = ({ children }: StartupLayoutProps) => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="flex items-center justify-between bg-white border-b p-4">
+      <main className="flex-1 flex flex-col bg-gray-50">
+        <header className="flex items-center justify-between p-4 border-b bg-white">
           <h1 className="text-lg font-semibold">{currentPageTitle}</h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src={user?.photoURL || ''} alt="User" />
-                  <AvatarFallback><UserCircle className="w-6 h-6" /></AvatarFallback>
+          <div className="flex items-center gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="h-8 w-8 cursor-pointer">
+                  <AvatarImage src="" alt={startup?.name} />
+                  <AvatarFallback>
+                    {startup?.name?.charAt(0).toUpperCase() || 'S'}
+                  </AvatarFallback>
                 </Avatar>
-                {user?.displayName || 'Startup'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                  {startup?.name || 'Startup'}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut size={16} className="mr-2" /> Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </header>
-
-        {/* Content */}
-        <main className="flex-1 p-6 bg-gray-50">
-          {children}
-        </main>
-      </div>
+        <Separator />
+        <div className="flex-1 p-6">{children}</div>
+      </main>
     </div>
   );
 };

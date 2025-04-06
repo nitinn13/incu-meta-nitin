@@ -1,6 +1,6 @@
 // src/contexts/StartupAuthContext.tsx
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios, { AxiosError } from 'axios';
 import { toast } from 'sonner';
 
@@ -29,13 +29,31 @@ export const StartupAuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  axios.interceptors.request.use((config) => {
+  // Attach Axios interceptor only once
+  useEffect(() => {
+    const interceptor = axios.interceptors.request.use((config) => {
+      const token = localStorage.getItem('startupToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    });
+
+    return () => {
+      axios.interceptors.request.eject(interceptor);
+    };
+  }, []);
+
+  // Load startup from localStorage on mount
+  useEffect(() => {
     const token = localStorage.getItem('startupToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const name = localStorage.getItem('startupName');
+    const email = localStorage.getItem('startupEmail');
+
+    if (token && name && email) {
+      setStartup({ token, name, email });
     }
-    return config;
-  });
+  }, []);
 
   const handleAuthError = (err: unknown, defaultMessage: string) => {
     const error = err as AxiosError<{ message: string }>;
@@ -49,10 +67,14 @@ export const StartupAuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      const response = await axios.post(`${host}/api/startup/register`, { name, email, password });
+      const response = await axios.post(`${host}/api/user/register`, { name, email, password });
       const { token } = response.data;
+
       localStorage.setItem('startupToken', token);
-      setStartup({ name, email });
+      localStorage.setItem('startupName', name);
+      localStorage.setItem('startupEmail', email);
+
+      setStartup({ token, name, email });
       toast.success('Registration successful!');
     } catch (err) {
       handleAuthError(err, 'Registration failed');
@@ -68,12 +90,15 @@ export const StartupAuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await axios.post(`${host}/api/user/login`, { email, password });
       const { token, name } = response.data;
+
       localStorage.setItem('startupToken', token);
-      setStartup({ name, email });
+      localStorage.setItem('startupName', name);
+      localStorage.setItem('startupEmail', email);
+
+      setStartup({ token, name, email });
       toast.success('Login successful!');
     } catch (err) {
       handleAuthError(err, 'Login failed');
-      throw err;
     } finally {
       setLoading(false);
     }
@@ -81,25 +106,35 @@ export const StartupAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     localStorage.removeItem('startupToken');
+    localStorage.removeItem('startupName');
+    localStorage.removeItem('startupEmail');
     setStartup(null);
-    toast.success('Logged out!');
+    toast.success('Logout successful!');
   };
 
-  const isAuthenticated = () => {
-    return !!localStorage.getItem('startupToken');
-  };
+  const isAuthenticated = () => !!startup?.token;
 
   return (
-    <StartupAuthContext.Provider value={{ startup, loading, error, register, login, logout, isAuthenticated }}>
+    <StartupAuthContext.Provider
+      value={{
+        startup,
+        loading,
+        error,
+        register,
+        login,
+        logout,
+        isAuthenticated
+      }}
+    >
       {children}
     </StartupAuthContext.Provider>
   );
 };
 
-export const useUserAuth = () => {
+export const useStartupAuth = () => {
   const context = useContext(StartupAuthContext);
-  if (!context) {
-    throw new Error('useUserAuth must be used within a StartupAuthProvider');
+  if (context === undefined) {
+    throw new Error('useStartupAuth must be used within a StartupAuthProvider');
   }
   return context;
 };
