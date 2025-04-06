@@ -34,23 +34,18 @@ const Index = () => {
 
   const testimonials = [
     {
-      quote: "IncuMeta helped us refine our business model and secure crucial early funding. Their mentorship was invaluable to our growth.",
-      author: "Jane Cooper",
-      role: "CEO, TechInnovate",
-      avatar: "/api/placeholder/64/64"
+      quote: "I am totally impressed by what this Project has achieved in such a short time. Just as it happens on multiple occasions, I once again find it difficult to believe that this has been developed in a hackathon with such detailing.",
+      author: "Dr. Vinod Shastri",
+      role: "Head of CIE, Ex-Dean (Student Affairs)",
+      avatar: "https://media.licdn.com/dms/image/v2/D5635AQG706OfVGODcA/profile-framedphoto-shrink_800_800/B56ZXymdwRGoAk-/0/1743531924798?e=1744516800&v=beta&t=hn1JD2ZGF4864CrUvzApUlVvOf3bTOsyq6lmZ7EjkMs"
     },
     {
-      quote: "The connections we made through the IncuMeta network opened doors we wouldn't have had access to otherwise. Game-changing for our startup.",
-      author: "Robert Fox",
-      role: "Founder, DataFlow",
-      avatar: "/api/placeholder/64/64"
+      quote: "Thank you for thinking about automating and solving challenges faced by the startup incubators. The product is looking impressive and we at Bennett Hatchery would like to use it. This can also help you in solution validation and necessary improvements. Wishing you and team, All the Very Best!!",
+      author: "Manish Mathur",
+      role: "Head of Bennett Hatchery",
+      avatar: "https://media.licdn.com/dms/image/v2/D4D03AQGnXjFUCCbCSw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1699950884926?e=1749686400&v=beta&t=c1WVOMxrroddWVYwu_7ehBQ4l1qTbjRjDQnt6irz7M0"
     },
-    {
-      quote: "The structured program and expert feedback helped us avoid common pitfalls and accelerate our go-to-market strategy.",
-      author: "Kristin Watson",
-      role: "CTO, GreenSolutions",
-      avatar: "/api/placeholder/64/64"
-    },
+    
   ];
 
   const navLinks = [
@@ -383,9 +378,9 @@ const Index = () => {
         <div className="container max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-sm font-medium text-primary">Testimonials</span>
-            <h2 className="mt-3 text-3xl font-bold text-gray-900">What Founders Say</h2>
+            <h2 className="mt-3 text-3xl font-bold text-gray-900">Words of Trust</h2>
             <p className="mt-4 text-xl text-gray-600 mx-auto max-w-3xl">
-              Success stories from startups that have participated in our programs
+            Hear what the leaders of our entrepreneurial community have to say about our platform, bridging startups and incubators.
             </p>
           </div>
 
@@ -537,7 +532,7 @@ const Index = () => {
                 </Button>
               </Link>
               <Link to="/contact">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-medium">
+                <Button size="lg" variant="outline" className="border-white text-black bg-white/10 hover:text-blue-500 font-medium">
                   Schedule a Call
                 </Button>
               </Link>
