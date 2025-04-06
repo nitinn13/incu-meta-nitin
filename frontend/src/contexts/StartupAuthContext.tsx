@@ -34,7 +34,7 @@ export const StartupAuthProvider = ({ children }: { children: ReactNode }) => {
     const interceptor = axios.interceptors.request.use((config) => {
       const token = localStorage.getItem('startupToken');
       if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        config.headers.token = token; // ✅ This will match your backend
       }
       return config;
     });

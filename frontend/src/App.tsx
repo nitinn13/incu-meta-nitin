@@ -31,6 +31,7 @@ import StartupDashboard from "@/pages/Startups/StartupDashboard";
 import StartupLogin from "@/pages/StartupLogin";
 import { StartupLayout } from "./components/layouts/StartupLayout";
 import StartupEvents from "./pages/Startups/StartupEvents";
+import StartupAnnouncements from "./pages/Startups/StartupAnnouncements";
 
 
 const queryClient = new QueryClient();
@@ -69,7 +70,7 @@ const App = () => (
               <Route element={<StartupProtectedRoute />}>
                 {/* <Route element={<StartupLayout/>}> */}
                   <Route path="/startup/dashboard" element={<StartupDashboard />} />
-                  <Route path="/startup/announcements" element={<Announcements />} />
+                  <Route path="/startup/announcements" element={<StartupAnnouncements/>} />
                   <Route path="/startup/events" element={<StartupEvents />} />
                   <Route path="/startup/schedules" element={<Schedules />} />
                 {/* </Route> */}
