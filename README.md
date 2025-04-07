@@ -72,12 +72,10 @@ IncuMeta is a comprehensive digital ecosystem designed to transform the way incu
 
 ## 🚧 Tech Stack (You can edit this to match your actual stack!)
 
-- **Frontend:** React.js / Next.js / Tailwind CSS
+- **Frontend:** React.js / Tailwind CSS
 - **Backend:** Node.js / Express.js
 - **Database:** MongoDB
-- **Authentication:** JWT / OAuth
-- **AI & Automation:** Speech-to-Text API, NLP tools for MoM generation
-- **Hosting:** Vercel / Netlify / Heroku / AWS
+- **Authentication:** JWT 
 
 ---
 
