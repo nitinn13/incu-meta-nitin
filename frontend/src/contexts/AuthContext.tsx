@@ -3,7 +3,7 @@ import axios, { AxiosError } from 'axios';
 import { toast } from 'sonner';
 
 
-const host = "http://localhost:3000"
+const host = "https://incu-meta-backend.onrender.com"
 type Admin = {
   email: string;
   name: string;

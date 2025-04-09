@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import axios, { AxiosError } from 'axios';
 import { toast } from 'sonner';
-const host = "http://localhost:3000"
+const host = "https://incu-meta-backend.onrender.com"
 // Type definition matching MongoDB schema
 export type Announcement = {
   _id: string;
