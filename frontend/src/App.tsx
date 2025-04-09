@@ -32,6 +32,7 @@ import StartupLogin from "@/pages/StartupLogin";
 import { StartupLayout } from "./components/layouts/StartupLayout";
 import StartupEvents from "./pages/Startups/StartupEvents";
 import StartupAnnouncements from "./pages/Startups/StartupAnnouncements";
+import StartupSchedules from "./pages/Startups/StartupSchedules";
 
 
 const queryClient = new QueryClient();
@@ -48,7 +49,7 @@ const App = () => (
               {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/apply" element={<Apply />} />
-              <Route path="/login" element={<Login />} />
+              <Route path="/admin/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/startup/login" element={<StartupLogin />} />
 
@@ -72,7 +73,7 @@ const App = () => (
                   <Route path="/startup/dashboard" element={<StartupDashboard />} />
                   <Route path="/startup/announcements" element={<StartupAnnouncements/>} />
                   <Route path="/startup/events" element={<StartupEvents />} />
-                  <Route path="/startup/schedules" element={<Schedules />} />
+                  <Route path="/startup/schedules" element={<StartupSchedules/>} />
                 {/* </Route> */}
               </Route>
 

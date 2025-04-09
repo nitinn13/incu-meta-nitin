@@ -45,14 +45,14 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/admin/login');
   };
 
   const navItems = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { path: '/admin/announcements', label: 'Announcements', icon: <Bell size={18} /> },
     { path: '/admin/startups', label: 'Incubated Startups', icon: <Rocket size={18} /> },
-    { path: 'http://localhost:5001/', label: 'Record MOM', icon: <FileEdit size={18} /> },
+    { path: '/admin/record-mom', label: 'Record MOM', icon: <FileEdit size={18} /> },
     { path: '/admin/events', label: 'Upcoming Events', icon: <Calendar size={18} /> },
     { path: '/admin/schedules', label: 'Scheduled Meetings', icon: <CalendarClock size={18} /> },
     { path: '/admin/requests', label: 'Requests', icon: <HelpCircle size={18} /> },

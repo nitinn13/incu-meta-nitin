@@ -96,7 +96,7 @@ const Index = () => {
                   {link.text}
                 </NavLink>
               ))} */}
-              <NavLink to="/login" className="ml-4">
+              <NavLink to="/admin/login" className="ml-4">
                 <Button variant="outline" size="sm">
                   Log In
                 </Button>
@@ -209,11 +209,11 @@ const Index = () => {
                 className="flex items-center mt-12 space-x-4"
               >
                 <div className="flex -space-x-3">
-                  {[...Array(4)].map((_, i) => (
+                  {/* {[...Array(4)].map((_, i) => (
                     <div key={i} className="w-10 h-10 rounded-full bg-white shadow-md ring-2 ring-white relative overflow-hidden">
                       <img src={`/api/placeholder/${40 + i}/${40 + i}`} alt="Founder" className="w-full h-full object-cover" />
                     </div>
-                  ))}
+                  ))} */}
                 </div>
                 <div className="text-sm">
                   <span className="font-semibold text-primary">500+ Startups</span> have accelerated their growth with us
