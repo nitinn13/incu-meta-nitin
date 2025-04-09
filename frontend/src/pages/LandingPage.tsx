@@ -143,7 +143,7 @@ const Index = () => {
                   </NavLink>
                 ))}
                 <div className="flex space-x-4 pt-4 border-t border-gray-100">
-                  <NavLink to="/login" className="flex-1">
+                  <NavLink to="/admin/login" className="flex-1">
                     <Button variant="outline" className="w-full">
                       Log In
                     </Button>
