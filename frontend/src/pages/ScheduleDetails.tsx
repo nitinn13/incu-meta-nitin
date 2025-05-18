@@ -1,11 +1,23 @@
-// src/pages/ScheduleDetails.tsx
-
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import styled from 'styled-components';
+import { CalendarIcon, ClockIcon, Building2Icon, InfoIcon, ArrowLeftIcon, VideoIcon } from "lucide-react";
+
+// UI Components
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle,
+  CardFooter
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+
 type Schedule = {
   _id: string;
   startupId: {
@@ -36,7 +48,6 @@ const ScheduleDetails = () => {
         });
 
         const data = await response.json();
-
         const foundSchedule = data.schedules.find((sched: Schedule) => sched._id === id);
 
         if (!foundSchedule) {
@@ -55,87 +66,177 @@ const ScheduleDetails = () => {
     fetchScheduleDetails();
   }, [admin?.token, id]);
 
-  if (loading) return <div>Loading schedule details...</div>;
+  // Format date as "Monday, January 1, 2023"
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
-  if (!schedule) return <div>Schedule not found.</div>;
+  // Format time for better readability
+  const formatTime = (timeString: string) => {
+    return timeString;
+  };
+
+  if (loading) {
+    return <ScheduleDetailsSkeleton />;
+  }
+
+  if (!schedule) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 p-6">
+        <InfoIcon className="w-12 h-12 text-gray-400 mb-4" />
+        <h2 className="text-xl font-medium text-gray-700">Schedule not found</h2>
+        <p className="text-gray-500 mt-2">The requested schedule could not be found</p>
+        <Link to="/schedules">
+          <Button variant="outline" className="mt-6">
+            <ArrowLeftIcon className="w-4 h-4 mr-2" />
+            Back to Schedules
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Schedule Details</CardTitle>
-          <CardDescription>{schedule.description || "No Description"}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-2">
-            <strong>Date:</strong> {new Date(schedule.date).toLocaleDateString()}
-          </p>
-          <p className="mb-2">
-            <strong>Time:</strong> {schedule.time}
-          </p>
-          <p className="mb-2">
-            <strong>Startup Name:</strong> {schedule.startupId?.name || "Unknown"}
-          </p>
-          <p className="mb-2">
-            <strong>Created At:</strong> {new Date(schedule.createdAt).toLocaleString()}
-          </p>
-        </CardContent>
-        {/* <a href="https://localhost:5000/" target="_blank" rel="noreferrer"></a> */}
-        <div className="m-4 flex justify-center" >
-          
-            <VCButton />
-          
-        </div>
+    <div className="max-w-3xl mx-auto p-6">
+      <div className="mb-6">
+        <Link to="/admin/schedules" className="inline-flex items-center text-blue-600 hover:text-blue-800">
+          <ArrowLeftIcon className="w-4 h-4 mr-1" />
+          <span>Back to all schedules</span>
+        </Link>
+      </div>
 
+      <Card className="shadow-lg border-t-4 border-t-blue-500">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl font-bold">Schedule Details</CardTitle>
+              <CardDescription className="mt-1 text-gray-600">
+                Meeting with {schedule.startupId?.name || "Unknown Startup"}
+              </CardDescription>
+            </div>
+            <Badge variant="outline" className="text-blue-600 border-blue-300 bg-blue-50">
+              ID: {schedule._id.substring(0, 8)}...
+            </Badge>
+          </div>
+        </CardHeader>
+        
+        <Separator />
+        
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <div className="flex">
+                <CalendarIcon className="w-5 h-5 mr-3 text-blue-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Date</p>
+                  <p className="text-base font-medium">{formatDate(schedule.date)}</p>
+                </div>
+              </div>
+              
+              <div className="flex">
+                <ClockIcon className="w-5 h-5 mr-3 text-blue-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Time</p>
+                  <p className="text-base font-medium">{formatTime(schedule.time)}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="flex">
+                <Building2Icon className="w-5 h-5 mr-3 text-blue-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Startup</p>
+                  <p className="text-base font-medium">{schedule.startupId?.name || "Unknown"}</p>
+                </div>
+              </div>
+              
+              <div className="flex">
+                <InfoIcon className="w-5 h-5 mr-3 text-blue-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Created</p>
+                  <p className="text-base font-medium">{new Date(schedule.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-8">
+            <h3 className="text-lg font-medium mb-3">Description</h3>
+            <div className="p-4 bg-gray-50 rounded-md border border-gray-200">
+              {schedule.description ? (
+                <p className="text-gray-700">{schedule.description}</p>
+              ) : (
+                <p className="text-gray-500 italic">No description provided</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+        
+        <Separator className="my-2" />
+        
+        <CardFooter className="flex justify-center py-6">
+          <Button 
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-5 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg"
+            onClick={() => window.open("http://localhost:5000/", "_blank")}
+          >
+            <VideoIcon className="w-5 h-5 mr-2" />
+            Start Video Conference
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );
 };
-const VCButton = () => {
+
+// Loading skeleton for better UX during data fetch
+const ScheduleDetailsSkeleton = () => {
   return (
-    <StyledWrapper>
-      <a href="http://localhost:5000/" target="_blank" rel="noreferrer">
-      <button> Start Video Chat
-      </button>
-      </a>
+    <div className="max-w-3xl mx-auto p-6">
+      <div className="mb-6">
+        <Skeleton className="h-6 w-32" />
+      </div>
       
-    </StyledWrapper>
+      <Card className="shadow-lg">
+        <CardHeader>
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-5 w-48" />
+        </CardHeader>
+        
+        <Separator />
+        
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2, 3, 4].map((item) => (
+              <div key={item} className="flex">
+                <Skeleton className="w-5 h-5 mr-3" />
+                <div>
+                  <Skeleton className="h-4 w-20 mb-2" />
+                  <Skeleton className="h-5 w-40" />
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-8">
+            <Skeleton className="h-6 w-32 mb-3" />
+            <Skeleton className="h-24 w-full rounded-md" />
+          </div>
+        </CardContent>
+        
+        <Separator className="my-2" />
+        
+        <CardFooter className="flex justify-center py-6">
+          <Skeleton className="h-12 w-64 rounded-lg" />
+        </CardFooter>
+      </Card>
+    </div>
   );
-}
-
-const StyledWrapper = styled.div`
-  button {
-   border: none;
-   color: #fff;
-   background-image: linear-gradient(30deg, #0400ff, #4ce3f7);
-   border-radius: 20px;
-   background-size: 100% auto;
-   font-family: inherit;
-   font-size: 17px;
-   padding: 0.6em 1.5em;
-  }
-
-  button:hover {
-   background-position: right center;
-   background-size: 200% auto;
-   -webkit-animation: pulse 2s infinite;
-   animation: pulse512 1.5s infinite;
-  }
-
-  @keyframes pulse512 {
-   0% {
-    box-shadow: 0 0 0 0 #05bada66;
-   }
-
-   70% {
-    box-shadow: 0 0 0 10px rgb(218 103 68 / 0%);
-   }
-
-   100% {
-    box-shadow: 0 0 0 0 rgb(218 103 68 / 0%);
-   }
-  }`;
-
-
+};
 
 export default ScheduleDetails;
