@@ -70,7 +70,7 @@ IncuMeta is a comprehensive digital ecosystem designed to transform the way incu
 
 ---
 
-## 🚧 Tech Stack (You can edit this to match your actual stack!)
+## 🚧 Tech Stack
 
 - **Frontend:** React.js / Tailwind CSS
 - **Backend:** Node.js / Express.js
