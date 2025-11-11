@@ -7,158 +7,195 @@ const jwt = require("jsonwebtoken");
 const { JWT_USER_SECRET } = require("../config");
 const { userMiddleware } = require("../middlewares/user");
 
-// User Apply (Registration)
+/* --------------------------- USER (STARTUP) REGISTRATION --------------------------- */
 userRouter.post("/apply", async (req, res) => {
-    try {
-        const reqBody = z.object({
-            email: z.string().email(),
-            password: z.string().min(3),
+  try {
+    const reqBody = z.object({
+      name: z.string().min(1),
+      email: z.string().email(),
+      password: z.string().min(3),
+
+      industry: z.string().min(1),
+      fundingStage: z.enum(["Ideation", "Pre-Seed", "Seed", "Series A", "Series B", "Growth"]),
+      revenue: z.number().nonnegative().optional(),
+      teamSize: z.number().int().nonnegative().optional(),
+
+      founders: z
+        .array(
+          z.object({
             name: z.string().min(1),
-            industry: z.string().min(1),
-            fundingStage: z.enum(["Ideation", "Pre-Seed", "Seed", "Series A", "Series B", "Growth"]),
-            revenue: z.number().nonnegative(),
-            teamSize: z.number().int().nonnegative()
-        });
+            email: z.string().email(),
+          })
+        )
+        .optional(),
 
-        const parsed = reqBody.safeParse(req.body);
-        if (!parsed.success) {
-            return res.status(400).json({ message: "Invalid request body", error: parsed.error.issues });
-        }
+      businessSummary: z.string().optional(),
+      innovationProof: z.string().optional(),
+      pitchDeckURL: z.string().url().optional(),
 
-        const { email, password, name, industry, fundingStage, revenue, teamSize } = parsed.data;
+      previousFunding: z
+        .array(
+          z.object({
+            round: z.string(),
+            amount: z.number().nonnegative(),
+            investor: z.string().optional(),
+          })
+        )
+        .optional(),
 
-        const existingUser = await userModel.findOne({ email });
-        if (existingUser) {
-            return res.status(409).json({ message: "User already exists" });
-        }
+      documents: z
+        .array(
+          z.object({
+            type: z.string(),
+            url: z.string().url(),
+          })
+        )
+        .optional(),
+    });
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await userModel.create({ email, password: hashedPassword, name, industry, fundingStage, revenue, teamSize });
-
-        res.status(201).json({ message: "User created successfully", user: { email: newUser.email, name: newUser.name } });
-    } catch (err) {
-        res.status(500).json({ message: "Error creating user", error: err.message });
+    const parsed = reqBody.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid request body", error: parsed.error.issues });
     }
+
+    const { email, password } = parsed.data;
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) return res.status(409).json({ message: "Startup already exists" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await userModel.create({ ...parsed.data, password: hashedPassword });
+
+    res.status(201).json({
+      message: "Startup application submitted successfully",
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        fundingStage: newUser.fundingStage,
+        isApproved: newUser.isApproved,
+      },
+    });
+  } catch (err) {
+    console.error("Error creating user:", err);
+    res.status(500).json({ message: "Error creating user", error: err.message });
+  }
 });
-userRouter.get("/dashboard-stats", userMiddleware, async (req, res) => {
-    try {
-      const userId = req.userId;
-  
-      const user = await userModel.findById(userId).select("name email industry fundingStage revenue teamSize");
-  
-      if (!user) {
-        return res.status(404).json({ message: "Startup not found" });
-      }
-  
-      const [totalEvents, totalAnnouncements, upcomingEvent] = await Promise.all([
-        eventModel.countDocuments(),
-        announcementModel.countDocuments(),
-        eventModel.findOne({}).sort({ date: 1 }).limit(1), // optional, based on your schema
-      ]);
-  
-      res.json({
+
+/* --------------------------- USER LOGIN --------------------------- */
+userRouter.post("/login", async (req, res) => {
+  try {
+    const reqBody = z.object({
+      email: z.string().email(),
+      password: z.string().min(3),
+    });
+
+    const parsed = reqBody.safeParse(req.body);
+    if (!parsed.success)
+      return res.status(400).json({ message: "Invalid request body", error: parsed.error.issues });
+
+    const { email, password } = parsed.data;
+    const user = await userModel.findOne({ email });
+
+    if (!user) return res.status(404).json({ message: "Startup not found" });
+    if (!user.isApproved) return res.status(401).json({ message: "Startup not approved by incubator" });
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) return res.status(401).json({ message: "Incorrect password" });
+
+    const token = jwt.sign({ email, id: user._id }, JWT_USER_SECRET, { expiresIn: "2h" });
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
         name: user.name,
         email: user.email,
         industry: user.industry,
         fundingStage: user.fundingStage,
-        revenue: user.revenue,
-        teamSize: user.teamSize,
-        accountCreated: user._id.getTimestamp(),
-        totalEvents,
-        totalAnnouncements,
-        upcomingEvent: upcomingEvent ? upcomingEvent.title : "No upcoming event"
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Error fetching dashboard stats", error: err.message });
-    }
-  });
-  
-// User Login
-userRouter.post("/login", async (req, res) => {
-    try {
-        const reqBody = z.object({
-            email: z.string().email(),
-            password: z.string().min(3)
-        });
-
-        const parsed = reqBody.safeParse(req.body);
-        if (!parsed.success) {
-            return res.status(400).json({ message: "Invalid request body", error: parsed.error.issues });
-        }
-
-        const { email, password } = parsed.data;
-
-        const user = await userModel.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        if(!user.isApproved){
-            res.status(401).json({message: "User not approved"});
-        }
-
-        const isPasswordCorrect = await bcrypt.compare(password, user.password);
-        if (!isPasswordCorrect) {
-            return res.status(401).json({ message: "Incorrect password" });
-        }
-
-        const token = jwt.sign({ email, id: user._id }, JWT_USER_SECRET, { expiresIn: "1h" });
-
-        res.status(200).json({ message: "Login successful", token });
-    } catch (err) {
-        res.status(500).json({ message: "Error logging in", error: err.message });
-    }
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error logging in", error: err.message });
+  }
 });
 
-userRouter.get('/profile', userMiddleware, async (req, res) => {
-    try {
-        const { userId } = req; 
-        if (!userId) {
-            return res.status(401).json({ message: "Unauthorized" });
-        }
+/* --------------------------- USER PROFILE --------------------------- */
+userRouter.get("/profile", userMiddleware, async (req, res) => {
+  try {
+    const { userId } = req;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-        const user = await userModel.findById(userId);
+    const user = await userModel.findById(userId).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        res.json({ user });
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
-    }
-});
-userRouter.get('/events', async (req, res) => {
-    try {
-        const events = await eventModel.find({});
-        res.json({events});
-    } 
-    catch(err){
-        res.status(500).json({message: "Error fetching events"})
-    }
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 });
 
-userRouter.get('/announcements', async (req, res) => {
-    try {
-        const announcements = await announcementModel.find({});
-        res.json({announcements});
-    }    
-    catch(err){
-        res.status(500).json({message: "Error fetching announcements"})
-    }
+/* --------------------------- DASHBOARD STATS --------------------------- */
+userRouter.get("/dashboard-stats", userMiddleware, async (req, res) => {
+  try {
+    const user = await userModel
+      .findById(req.userId)
+      .select("name email industry fundingStage revenue teamSize createdAt");
+
+    if (!user) return res.status(404).json({ message: "Startup not found" });
+
+    const [totalEvents, totalAnnouncements, nextEvent] = await Promise.all([
+      eventModel.countDocuments(),
+      announcementModel.countDocuments(),
+      eventModel.findOne().sort({ createdAt: 1 }).limit(1),
+    ]);
+
+    res.json({
+      name: user.name,
+      email: user.email,
+      industry: user.industry,
+      fundingStage: user.fundingStage,
+      revenue: user.revenue,
+      teamSize: user.teamSize,
+      joinedOn: user.createdAt,
+      totalEvents,
+      totalAnnouncements,
+      nextEvent: nextEvent ? nextEvent.title : "No events available",
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching dashboard stats", error: err.message });
+  }
 });
 
-userRouter.get('/my-schedules', userMiddleware, async (req, res) => {
-    try{
-        const schedules = await scheduleModel.find({startupId: req.userId});
-        res.json({schedules});
-    }
-    catch(err){
-        res.status(500).json({message: "Error fetching schedules"})
-    }
+/* --------------------------- EVENTS & ANNOUNCEMENTS --------------------------- */
+userRouter.get("/events", async (_, res) => {
+  try {
+    const events = await eventModel.find({}).sort({ createdAt: -1 });
+    res.json({ events });
+  } catch {
+    res.status(500).json({ message: "Error fetching events" });
+  }
 });
 
+userRouter.get("/announcements", async (_, res) => {
+  try {
+    const announcements = await announcementModel.find({}).sort({ createdAt: -1 });
+    res.json({ announcements });
+  } catch {
+    res.status(500).json({ message: "Error fetching announcements" });
+  }
+});
 
-module.exports = {
-    userRouter
-};
+/* --------------------------- USER’S OWN MEETINGS --------------------------- */
+userRouter.get("/my-schedules", userMiddleware, async (req, res) => {
+  try {
+    const schedules = await scheduleModel
+      .find({ startupId: req.userId })
+      .populate("startupId", "name email");
+    res.json({ schedules });
+  } catch {
+    res.status(500).json({ message: "Error fetching schedules" });
+  }
+});
+
+module.exports = { userRouter };
