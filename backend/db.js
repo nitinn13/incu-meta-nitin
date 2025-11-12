@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
 });
 
 
-const incubatorSchema = new mongoose.Schema({
+const adminSchema = new mongoose.Schema({
   name: { type: String, required: true },                      
   email: { type: String, unique: true, required: true },        
   password: { type: String, required: true },                   
@@ -80,7 +80,7 @@ const scheduleModel = mongoose.model('schedules', ScheduleSchema);
 
 module.exports = {
   userModel,
-  adminModel,
+  // adminModel,
   announcementModel,
   eventModel,
   scheduleModel

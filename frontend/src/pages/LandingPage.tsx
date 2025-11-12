@@ -194,7 +194,7 @@ const Index = () => {
                       <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </Link>
-                  <Link to="/programs">
+                  <Link to="/progs">
                     <Button size="lg" variant="outline" className="font-medium">
                       Explore Programs
                     </Button>

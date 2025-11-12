@@ -33,7 +33,8 @@ import { StartupLayout } from "./components/layouts/StartupLayout";
 import StartupEvents from "./pages/Startups/StartupEvents";
 import StartupAnnouncements from "./pages/Startups/StartupAnnouncements";
 import StartupSchedules from "./pages/Startups/StartupSchedules";
-
+import IncubatorCards from "./pages/fetched";
+import IncubatorProg from "./pages/Programs";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,13 @@ const App = () => (
               <Route path="/apply" element={<Apply />} />
               <Route path="/admin/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/register" element={<Register />} />
+
+              <Route path="/card" element={<IncubatorCards />} />
+
+              <Route path="/progs" element={<IncubatorProg />} />
+
+
               <Route path="/startup/login" element={<StartupLogin />} />
 
               {/* Admin Protected Routes */}
