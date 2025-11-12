@@ -1,3 +1,4 @@
+// routes/adminRouter.js
 const { Router } = require("express");
 const adminRouter = Router();
 const { adminModel, eventModel, announcementModel, userModel, scheduleModel } = require("../db");
@@ -66,7 +67,6 @@ adminRouter.post("/register", async (req, res) => {
         name: newAdmin.name,
         email: newAdmin.email,
         organizationType: newAdmin.organizationType,
-        isApproved: newAdmin.isApproved,
       },
     });
   } catch (err) {
@@ -97,7 +97,7 @@ adminRouter.post("/login", async (req, res) => {
     const token = jwt.sign(
       { email, id: incubator._id, name: incubator.name, organizationType: incubator.organizationType },
       JWT_ADMIN_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "2h" }
     );
 
     res.status(200).json({
@@ -110,7 +110,6 @@ adminRouter.post("/login", async (req, res) => {
         organizationType: incubator.organizationType,
         website: incubator.website,
         director: incubator.director,
-        isApproved: incubator.isApproved,
       },
     });
   } catch (err) {
@@ -124,17 +123,17 @@ adminRouter.get("/profile", adminMiddleware, async (req, res) => {
     const { userId } = req;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const admin = await adminModel.findById(userId);
-    if (!admin) return res.status(404).json({ message: "User not found" });
+    const admin = await adminModel.findById(userId).select("-password");
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
 
-    res.json({ admin });
+    res.status(200).json({ message: "Profile fetched successfully", admin });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 /* --------------------------- DASHBOARD STATS --------------------------- */
-adminRouter.get("/dashboard-stats", async (req, res) => {
+adminRouter.get("/dashboard-stats", adminMiddleware, async (req, res) => {
   try {
     const totalStartups = await userModel.countDocuments();
     const approvedStartups = await userModel.countDocuments({ isApproved: true });
@@ -151,21 +150,26 @@ adminRouter.get("/dashboard-stats", async (req, res) => {
     const totalMeetings = await scheduleModel.countDocuments();
     const totalAdmins = await adminModel.countDocuments();
 
-    const fundingStageBreakdown = await userModel.aggregate([{ $group: { _id: "$fundingStage", count: { $sum: 1 } } }]);
+    const fundingStageBreakdown = await userModel.aggregate([
+      { $group: { _id: "$fundingStage", count: { $sum: 1 } } },
+    ]);
 
-    res.json({
-      totalStartups,
-      approvedStartups,
-      pendingStartups,
-      totalRevenue: totalRevenue?.total || 0,
-      totalTeamSize: totalTeamSize?.total || 0,
-      largestTeam,
-      topRevenueStartup,
-      totalEvents,
-      totalAnnouncements,
-      totalMeetings,
-      totalAdmins,
-      fundingStageBreakdown,
+    res.status(200).json({
+      message: "Dashboard stats fetched successfully",
+      stats: {
+        totalStartups,
+        approvedStartups,
+        pendingStartups,
+        totalRevenue: totalRevenue?.total || 0,
+        totalTeamSize: totalTeamSize?.total || 0,
+        largestTeam,
+        topRevenueStartup,
+        totalEvents,
+        totalAnnouncements,
+        totalMeetings,
+        totalAdmins,
+        fundingStageBreakdown,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: "Error fetching dashboard stats", error: err.message });
@@ -175,8 +179,8 @@ adminRouter.get("/dashboard-stats", async (req, res) => {
 /* --------------------------- STARTUP MANAGEMENT --------------------------- */
 adminRouter.get("/all-startups", adminMiddleware, async (_, res) => {
   try {
-    const startups = await userModel.find({});
-    res.json({ startups });
+    const startups = await userModel.find({}).select("-password");
+    res.status(200).json({ startups });
   } catch {
     res.status(500).json({ message: "Error fetching startups" });
   }
@@ -184,9 +188,9 @@ adminRouter.get("/all-startups", adminMiddleware, async (_, res) => {
 
 adminRouter.get("/all-startups/:id", adminMiddleware, async (req, res) => {
   try {
-    const startup = await userModel.findById(req.params.id);
+    const startup = await userModel.findById(req.params.id).select("-password");
     if (!startup) return res.status(404).json({ message: "Startup not found" });
-    res.json({ startup });
+    res.status(200).json({ startup });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
@@ -195,11 +199,9 @@ adminRouter.get("/all-startups/:id", adminMiddleware, async (req, res) => {
 adminRouter.post("/approve-startup", adminMiddleware, async (req, res) => {
   try {
     const { id } = req.body;
-    const startup = await userModel.findById(id);
+    const startup = await userModel.findByIdAndUpdate(id, { isApproved: true });
     if (!startup) return res.status(404).json({ message: "Startup not found" });
 
-    startup.isApproved = true;
-    await startup.save();
     res.status(200).json({ message: "Startup approved successfully" });
   } catch {
     res.status(500).json({ message: "Error approving startup" });
@@ -213,12 +215,18 @@ adminRouter.post("/create-event", adminMiddleware, async (req, res) => {
       title: z.string().min(1),
       description: z.string().optional(),
       location: z.string().optional(),
+      date: z.string().datetime().optional(),
     });
 
     const parsed = reqBody.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: "Invalid event data", error: parsed.error.issues });
+    if (!parsed.success)
+      return res.status(400).json({ message: "Invalid event data", error: parsed.error.issues });
 
-    await eventModel.create(parsed.data);
+    const eventData = parsed.data.date
+      ? { ...parsed.data, date: new Date(parsed.data.date) }
+      : parsed.data;
+
+    await eventModel.create(eventData);
     res.status(201).json({ message: "Event created successfully" });
   } catch {
     res.status(500).json({ message: "Error creating event" });
@@ -244,7 +252,8 @@ adminRouter.post("/create-announcement", adminMiddleware, async (req, res) => {
     });
 
     const parsed = reqBody.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: "Invalid announcement data", error: parsed.error.issues });
+    if (!parsed.success)
+      return res.status(400).json({ message: "Invalid announcement data", error: parsed.error.issues });
 
     await announcementModel.create(parsed.data);
     res.status(201).json({ message: "Announcement created successfully" });
@@ -268,15 +277,20 @@ adminRouter.post("/schedule-meeting", adminMiddleware, async (req, res) => {
   try {
     const reqBody = z.object({
       startupId: z.string(),
-      date: z.string(),
+      date: z.string().datetime(),
       time: z.string(),
       description: z.string().optional(),
     });
 
     const parsed = reqBody.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: "Invalid schedule data", error: parsed.error.issues });
+    if (!parsed.success)
+      return res.status(400).json({ message: "Invalid schedule data", error: parsed.error.issues });
 
-    await scheduleModel.create(parsed.data);
+    await scheduleModel.create({
+      ...parsed.data,
+      date: new Date(parsed.data.date),
+    });
+
     res.status(201).json({ message: "Meeting scheduled successfully" });
   } catch {
     res.status(500).json({ message: "Error creating schedule" });
@@ -285,8 +299,8 @@ adminRouter.post("/schedule-meeting", adminMiddleware, async (req, res) => {
 
 adminRouter.get("/all-schedules", adminMiddleware, async (_, res) => {
   try {
-    const schedules = await scheduleModel.find({}).populate("startupId", "name");
-    res.json({ schedules });
+    const schedules = await scheduleModel.find({}).populate("startupId", "name email");
+    res.status(200).json({ schedules });
   } catch {
     res.status(500).json({ message: "Error fetching schedules" });
   }
@@ -294,9 +308,11 @@ adminRouter.get("/all-schedules", adminMiddleware, async (_, res) => {
 
 adminRouter.get("/schedule/:id", adminMiddleware, async (req, res) => {
   try {
-    const schedule = await scheduleModel.findById(req.params.id).populate("startupId", "name email");
+    const schedule = await scheduleModel
+      .findById(req.params.id)
+      .populate("startupId", "name email");
     if (!schedule) return res.status(404).json({ message: "Schedule not found" });
-    res.json({ schedule });
+    res.status(200).json({ schedule });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
