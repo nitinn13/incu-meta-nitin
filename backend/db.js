@@ -105,7 +105,7 @@ const scheduleModel = mongoose.model('schedules', ScheduleSchema);
 
 module.exports = {
   userModel,
-  // adminModel,
+  adminModel,
   announcementModel,
   eventModel,
   scheduleModel
