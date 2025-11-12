@@ -86,3 +86,23 @@ IncuMeta is a comprehensive digital ecosystem designed to transform the way incu
 > ![image](https://github.com/user-attachments/assets/718a5542-066a-4d3a-9310-a1bfa81add98)
 
 
+
+## next steps - 
+Business canvas model 
+Funding status 
+Legal documents upload 
+Products and services 
+Lists of incubators 
+Feedback 
+Tracking 
+  
+
+
+Incubator 
+Previous investments 
+Verification 
+VCs list 
+Background 
+Mentors profile
+
+
