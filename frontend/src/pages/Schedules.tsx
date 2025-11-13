@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
+import { a } from "node_modules/framer-motion/dist/types.d-B50aGbjN"
 
 type Schedule = {
   _id: string
@@ -38,7 +39,7 @@ type Startup = {
 type ViewMode = "grid" | "list" | "calendar"
 
 const Schedules = () => {
-  const { admin } = useAuth()
+  // const { admin } = useAuth()
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [filteredSchedules, setFilteredSchedules] = useState<Schedule[]>([])
   const [startups, setStartups] = useState<Startup[]>([])
@@ -48,6 +49,7 @@ const Schedules = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date())
   const navigate = useNavigate()
+  const adminToken = localStorage.getItem("adminToken")
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -69,12 +71,12 @@ const Schedules = () => {
 
   // Fetch startups
   const fetchStartups = async () => {
-    if (!admin?.token) return
+    if (!adminToken) return
 
     try {
-      const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/all-startups", {
+      const response = await fetch("http://localhost:3000/api/admin/all-startups", {
         headers: {
-          token: admin.token,
+          token: adminToken,
         },
       })
       const data = await response.json()
@@ -87,12 +89,12 @@ const Schedules = () => {
 
   // Fetch schedules
   const fetchSchedules = async () => {
-    if (!admin?.token) return
+    if (!adminToken) return
 
     try {
-      const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/all-schedules", {
+      const response = await fetch("http://localhost:3000/api/admin/all-schedules", {
         headers: {
-          token: admin.token,
+          token: adminToken,
         },
       })
       const data = await response.json()
@@ -109,7 +111,7 @@ const Schedules = () => {
   useEffect(() => {
     fetchStartups()
     fetchSchedules()
-  }, [admin?.token])
+  }, [adminToken])
 
   useEffect(() => {
     // Filter schedules based on search term and active filter
@@ -164,43 +166,54 @@ const Schedules = () => {
     return !Object.values(errors).some(Boolean)
   }
 
-  const handleSubmit = async () => {
-    if (!admin?.token) return
+ const handleSubmit = async () => {
+  if (!adminToken) return;
 
-    if (!validateForm()) {
-      toast.error("Please fill in all required fields")
-      return
-    }
-
-    try {
-      const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/schedule-meeting", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          token: admin.token,
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (response.ok) {
-        toast.success("Schedule created successfully")
-        setIsModalOpen(false)
-        setFormData({
-          startupId: "",
-          date: "",
-          time: "",
-          description: "",
-        })
-        fetchSchedules() // Refresh the list
-      } else {
-        const errorData = await response.json()
-        toast.error(errorData.message || "Failed to create schedule")
-      }
-    } catch (error) {
-      console.error("Error creating schedule:", error)
-      toast.error("Error creating schedule")
-    }
+  if (!validateForm()) {
+    toast.error("Please fill in all required fields");
+    return;
   }
+
+  try {
+    // FIX: Combine date + time into ISO format
+    const isoDate = new Date(`${formData.date}T${formData.time}:00`).toISOString();
+
+    const payload = {
+      startupId: formData.startupId,
+      date: isoDate,           // backend needs ISO datetime
+      time: formData.time,     // backend still stores this separately
+      description: formData.description,
+    };
+
+    const response = await fetch("http://localhost:3000/api/admin/schedule-meeting", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        token: adminToken,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      toast.success("Schedule created successfully");
+      setIsModalOpen(false);
+      setFormData({
+        startupId: "",
+        date: "",
+       time: "",
+        description: "",
+      });
+      fetchSchedules();
+    } else {
+      const errorData = await response.json();
+      toast.error(errorData.message || "Failed to create schedule");
+    }
+  } catch (error) {
+    console.error("Error creating schedule:", error);
+    toast.error("Error creating schedule");
+  }
+};
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

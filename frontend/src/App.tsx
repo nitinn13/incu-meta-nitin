@@ -35,6 +35,7 @@ import StartupAnnouncements from "./pages/Startups/StartupAnnouncements";
 import StartupSchedules from "./pages/Startups/StartupSchedules";
 import IncubatorCards from "./pages/fetched";
 import IncubatorProg from "./pages/Programs";
+import UpdateProfile from "./pages/Startups/UpdateProfile";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
                   <Route path="/startup/announcements" element={<StartupAnnouncements/>} />
                   <Route path="/startup/events" element={<StartupEvents />} />
                   <Route path="/startup/schedules" element={<StartupSchedules/>} />
+                  <Route path="/startup/update" element={<UpdateProfile/>} />
                 {/* </Route> */}
               </Route>
 

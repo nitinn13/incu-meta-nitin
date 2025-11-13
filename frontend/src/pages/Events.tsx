@@ -82,7 +82,8 @@ type Event = {
 };
 
 const Events = () => {
-  const { admin } = useAuth();
+  // const { admin } = useAuth();
+  const adminToken = localStorage.getItem("adminToken");
   const { events, refreshEvents } = useEvents();
 
   const [search, setSearch] = useState("");
@@ -132,11 +133,11 @@ const Events = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/create-event", {
+      const response = await fetch("http://localhost:3000/api/admin/create-event", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          token: `${admin?.token}`,
+          token: `${adminToken}`,
         },
         body: JSON.stringify(newEvent),
       });
@@ -165,11 +166,11 @@ const Events = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/update-event", {
+      const response = await fetch("http://localhost:3000/api/admin/update-event", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          token: `${admin?.token}`,
+          token: `${adminToken}`,
         },
         body: JSON.stringify(editEvent),
       });
@@ -192,11 +193,11 @@ const Events = () => {
   const handleDeleteEvent = async (eventId: string) => {
     try {
       setIsLoading(true);
-      const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/remove-event", {
+      const response = await fetch("http://localhost:3000/api/admin/remove-event", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          token: `${admin?.token}`,
+          token: `${adminToken}`,
         },
         body: JSON.stringify({ eventId }),
       });
@@ -242,7 +243,7 @@ const Events = () => {
   });
 
   // Sorting function
-  const sortedEvents = filteredEvents ? [...filteredEvents].sort((a, b) => {
+  const sortedEvents = filteredEvents ? [...filteredEvents].sort((a: any, b : any) => {
     if (sortConfig.key === 'createdAt') {
       return sortConfig.direction === 'asc' 
         ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -516,7 +517,7 @@ const Events = () => {
             {isLoading ? (
               renderSkeletons()
             ) : sortedEvents && sortedEvents.length > 0 ? (
-              sortedEvents.map((event) => (
+              sortedEvents.map((event : any) => (
                 <TableRow key={event._id} className="group hover:bg-muted/40">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">

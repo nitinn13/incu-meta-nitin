@@ -40,10 +40,10 @@ const StartupLogin = () => {
   const handleDemoLogin = async () => {
     try {
       setIsSubmitting(true);
-      setEmail("demouser@gmail.com");
-      setPassword("demouser");
+      setEmail("contact@aquaai.io");
+      setPassword("securepass123");
       
-      await login("demouser@gmail.com", "demouser");
+      await login("contact@aquaai.io", "securepass123");
       toast.success("Demo login successful!");
       navigate("/startup/dashboard");
     } catch (error) {

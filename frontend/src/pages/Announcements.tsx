@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { useAnnouncements } from "@/contexts/AnnouncementContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,25 +24,49 @@ import {
 
 type AnnouncementType = 'news' | 'funding' | 'government' | 'other';
 
+interface Announcement {
+  _id: string;
+  title: string;
+  message: string;
+  type?: AnnouncementType;
+  createdAt: string;
+}
+
 const Announcements = () => {
-  const { admin } = useAuth();
-  const { 
-    announcements, 
-    loading, 
-    error, 
-    createAnnouncement: contextCreateAnnouncement,
-    deleteAnnouncement: contextDeleteAnnouncement,
-    fetchAnnouncements
-  } = useAnnouncements();
+  const adminToken = localStorage.getItem("adminToken");
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: "",
     description: "",
-    type: "news" as AnnouncementType, // Explicitly type this
+    type: "news" as AnnouncementType,
   });
-
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+  const fetchAnnouncements = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:3000/api/user/announcements");
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch announcements");
+      }
+      
+      const data = await response.json();
+      setAnnouncements(data.announcements || []);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load announcements");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCreateAnnouncement = async () => {
     if (
@@ -56,11 +78,11 @@ const Announcements = () => {
     }
   
     try {
-      const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/create-announcement", {
+      const response = await fetch("http://localhost:3000/api/admin/create-announcement", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          token: `${admin?.token}`,
+          token: `${adminToken}`,
         },
         body: JSON.stringify({
           title: newAnnouncement.title,
@@ -75,12 +97,8 @@ const Announcements = () => {
       }
   
       toast.success("Announcement created successfully");
-  
-      // Reset form
       setNewAnnouncement({ title: "", description: "", type: "news" });
       setIsDialogOpen(false);
-  
-      //  Fetch updated announcements
       fetchAnnouncements();
     } catch (error) {
       console.error("Error creating announcement:", error);
@@ -88,14 +106,13 @@ const Announcements = () => {
     }
   };
   
-  
   const handleDeleteAnnouncement = async (id: string) => {
     try {
-      const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/remove-announcement", {
+      const response = await fetch("http://localhost:3000/api/admin/remove-announcement", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          token: `${admin?.token}`, // Make sure `admin` is available from context
+          token: `${adminToken}`,
         },
         body: JSON.stringify({ announcementId: id }),
       });
@@ -106,7 +123,7 @@ const Announcements = () => {
       }
   
       toast.success("Announcement deleted");
-      fetchAnnouncements(); // Make sure this is defined to refresh the UI
+      fetchAnnouncements();
     } catch (error) {
       console.error("Error deleting announcement:", error);
       toast.error("Failed to delete announcement");
@@ -120,7 +137,8 @@ const Announcements = () => {
     (announcement.type && announcement.type.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const getTypeLabel = (type: string) => {
+  const getTypeLabel = (type?: string) => {
+    if (!type) return null;
     switch (type) {
       case 'funding': return 'Funding Opportunity';
       case 'government': return 'Government Scheme';
@@ -130,7 +148,8 @@ const Announcements = () => {
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeColor = (type?: string) => {
+    if (!type) return '';
     switch (type) {
       case 'funding': return 'bg-green-100 text-green-800 border-green-200';
       case 'government': return 'bg-purple-100 text-purple-800 border-purple-200';
@@ -187,11 +206,11 @@ const Announcements = () => {
                     Type
                   </label>
                   <Select
-      value={newAnnouncement.type}
-          onValueChange={(value: AnnouncementType) => 
-                 setNewAnnouncement({ ...newAnnouncement, type: value })
-    }
-  >
+                    value={newAnnouncement.type}
+                    onValueChange={(value: AnnouncementType) => 
+                      setNewAnnouncement({ ...newAnnouncement, type: value })
+                    }
+                  >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -259,12 +278,12 @@ const Announcements = () => {
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium">{announcement.title}</h3>
                       {announcement.type && (
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(announcement.type)}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getTypeColor(announcement.type)}`}>
                           {getTypeLabel(announcement.type)}
                         </span>
                       )}
                     </div>
-                    {admin && (
+                    {adminToken && (
                       <div className="flex items-center space-x-2">
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Edit">
                           <Edit className="h-4 w-4" />

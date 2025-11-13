@@ -3,10 +3,11 @@ import axios, { AxiosError } from 'axios';
 import { toast } from 'sonner';
 
 
-const host = "https://incu-meta-backend.onrender.com"
+// const host = "https://incu-meta-backend.onrender.com"
+const host = "http://localhost:3000";
 type Admin = {
-  email: string;
-  name: string;
+  email?: string;
+  name?: string;
   token?: string;
 } | null;
 
@@ -71,10 +72,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { token } = response.data;
       localStorage.setItem('adminToken', token);
       
-      // Decode token to get admin info (without sensitive data)
       const adminData = {
-        email,
-        name: email.split('@')[0], // Or fetch from backend if available
+        // email,
+        // name: email.split('@')[0],
         token
       };
 

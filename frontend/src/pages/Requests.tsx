@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -20,7 +19,8 @@ type Startup = {
 
 
 const Requests = () => {
-  const { admin } = useAuth();
+  // const { admin } = useAuth();
+  const adminToken = localStorage.getItem("adminToken");
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStartup, setSelectedStartup] = useState<Startup | null>(null);
@@ -29,12 +29,16 @@ const Requests = () => {
 
   useEffect(() => {
     const fetchStartups = async () => {
-      if (!admin?.token) return;
+      if (!adminToken) {
+        console.warn("Admin token missing", adminToken);
+        toast.error("Admin token missing");
+        return;
+      }
 
       try {
-        const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/all-startups", {
+        const response = await fetch("http://localhost:3000/api/admin/all-startups", {
           headers: {
-            token: admin.token,
+            token: adminToken,
           },
         });
         const data = await response.json();
@@ -49,7 +53,7 @@ const Requests = () => {
     };
 
     fetchStartups();
-  }, [admin?.token]);
+  }, [adminToken]);
 
   const handleApproveClick = (startup: Startup) => {
     setSelectedStartup(startup);
@@ -57,14 +61,14 @@ const Requests = () => {
   };
 
   const approveStartup = async () => {
-    if (!admin?.token || !selectedStartup) return;
+    if (!adminToken || !selectedStartup) return;
 
     try {
-      const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/approve-startup", {
+      const response = await fetch("http://localhost:3000/api/admin/approve-startup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          token: admin.token,
+          token: adminToken,
         },
         body: JSON.stringify({ id: selectedStartup._id }),
       });

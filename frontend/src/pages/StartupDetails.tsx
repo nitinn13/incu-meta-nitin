@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { 
@@ -33,21 +32,21 @@ const formatCurrency = (value) => {
 const StartupDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { admin } = useAuth();
+  const adminToken = localStorage.getItem("adminToken");
   const [startup, setStartup] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStartupDetails = async () => {
-      if (!admin?.token) {
+      if (!adminToken) {
         toast.error("Admin token missing");
         return;
       }
 
       try {
-        const response = await fetch(`https://incu-meta-backend.onrender.com/api/admin/all-startups/${id}`, {
+        const response = await fetch(`http://localhost:3000/api/admin/all-startups/${id}`, {
           headers: {
-            token: admin.token,
+            token: adminToken,
           },
         });
 
@@ -68,7 +67,7 @@ const StartupDetails = () => {
     };
 
     fetchStartupDetails();
-  }, [id, admin?.token]);
+  }, [id, adminToken]);
 
   if (loading) {
     return (
@@ -127,12 +126,14 @@ const StartupDetails = () => {
     { name: 'Market Share', current: '12%', target: '15%', value: 12/15 * 100 }
   ];
 
-  // Funding History
-  const fundingHistory = [
-    { round: 'Pre-Seed', amount: startup.revenue * 0.1 },
-    { round: 'Seed', amount: startup.revenue * 0.2 },
-    { round: 'Series A', amount: startup.revenue * 0.7 }
-  ];
+  // Funding History - use actual data from API
+  const fundingHistory = startup.previousFunding && startup.previousFunding.length > 0
+    ? startup.previousFunding.map(funding => ({
+        round: funding.round,
+        amount: funding.amount,
+        investor: funding.investor
+      }))
+    : [{ round: 'No funding yet', amount: 0, investor: 'N/A' }];
 
   // COLORS for charts
   const COLORS = ['#475569', '#64748B', '#94A3B8', '#CBD5E1', '#E2E8F0'];
@@ -373,78 +374,107 @@ const StartupDetails = () => {
         </div>
       </div>
 
-      {/* Additional Information */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-sm border-0">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-medium text-gray-800">Communication</CardTitle>
-              <MessageSquare className="h-4 w-4 text-gray-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <p className="text-sm text-gray-600">Last Meeting</p>
-                <p className="text-sm font-medium text-gray-700">3 days ago</p>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <p className="text-sm text-gray-600">Response Time</p>
-                <p className="text-sm font-medium text-gray-700">24 hours</p>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <p className="text-sm text-gray-600">Next Check-in</p>
-                <p className="text-sm font-medium text-gray-700">Apr 12, 2025</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Business Summary and Additional Information */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {startup.businessSummary && (
+          <Card className="shadow-sm border-0">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-medium text-gray-800">Business Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-700 leading-relaxed">{startup.businessSummary}</p>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className="shadow-sm border-0">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-medium text-gray-800">Technology Stack</CardTitle>
-              <Layers className="h-4 w-4 text-gray-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-2">
-              {['React', 'Node.js', 'MongoDB', 'AWS', 'GraphQL', 'TypeScript'].map((tech, index) => (
-                <div key={index} className="bg-gray-50 px-3 py-2 rounded-md">
-                  <p className="text-sm font-medium text-gray-700">{tech}</p>
+        {startup.innovationProof && (
+          <Card className="shadow-sm border-0">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-medium text-gray-800">Innovation Proof</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-700 leading-relaxed">{startup.innovationProof}</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Founders */}
+      {startup.founders && startup.founders.length > 0 && (
+        <div className="mt-6">
+          <Card className="shadow-sm border-0">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-medium text-gray-800">Founders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {startup.founders.map((founder, index) => (
+                  <div key={index} className="flex items-center p-3 bg-gray-50 rounded-md">
+                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                      <Users className="h-5 w-5 text-gray-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">{founder.name}</p>
+                      <p className="text-xs text-gray-500">{founder.email}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Documents and Resources */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {startup.documents && startup.documents.length > 0 && (
+          <Card className="shadow-sm border-0">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-medium text-gray-800">Documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {startup.documents.map((doc, index) => (
+                  <a
+                    key={index}
+                    href={doc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <Layers className="h-4 w-4 text-gray-400 mr-2" />
+                      <p className="text-sm font-medium text-gray-700">{doc.type}</p>
+                    </div>
+                    <ArrowLeft className="h-4 w-4 text-gray-400 rotate-180" />
+                  </a>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {startup.pitchDeckURL && (
+          <Card className="shadow-sm border-0">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-medium text-gray-800">Pitch Deck</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <a
+                href={startup.pitchDeckURL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center">
+                  <BarChart2 className="h-4 w-4 text-gray-400 mr-2" />
+                  <p className="text-sm font-medium text-gray-700">View Pitch Deck</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm border-0">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-medium text-gray-800">Timeline</CardTitle>
-              <Clock className="h-4 w-4 text-gray-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="relative pl-5 pb-5 border-l-2 border-gray-200">
-                <div className="absolute -left-1.5 mt-1 h-3 w-3 rounded-full bg-gray-400"></div>
-                <p className="text-xs text-gray-500">Apr 2025</p>
-                <p className="text-sm font-medium text-gray-700">Series A Funding</p>
-              </div>
-              <div className="relative pl-5 pb-5 border-l-2 border-gray-200">
-                <div className="absolute -left-1.5 mt-1 h-3 w-3 rounded-full bg-gray-400"></div>
-                <p className="text-xs text-gray-500">Dec 2024</p>
-                <p className="text-sm font-medium text-gray-700">Market Expansion</p>
-              </div>
-              <div className="relative pl-5">
-                <div className="absolute -left-1.5 mt-1 h-3 w-3 rounded-full bg-gray-400"></div>
-                <p className="text-xs text-gray-500">Oct 2024</p>
-                <p className="text-sm font-medium text-gray-700">Product Launch</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <ArrowLeft className="h-4 w-4 text-gray-400 rotate-180" />
+              </a>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

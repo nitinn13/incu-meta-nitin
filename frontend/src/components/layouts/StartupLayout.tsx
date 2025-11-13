@@ -51,6 +51,7 @@ export const StartupLayout = ({ children }: StartupLayoutProps) => {
     { path: '/startup/announcements', label: 'Announcements', icon: <Bell size={18} /> },
     { path: '/startup/events', label: 'Upcoming Events', icon: <Calendar size={18} /> },
     { path: '/startup/schedules', label: 'Scheduled Meetings', icon: <CalendarClock size={18} /> },
+    { path: '/startup/update', label: 'Update Profile', icon: <UserCircle size={18} /> },
   ];
 
   useEffect(() => {

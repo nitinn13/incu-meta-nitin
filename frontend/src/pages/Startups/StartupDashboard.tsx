@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   BarChart, 
@@ -11,13 +10,12 @@ import {
   Pie, 
   Cell, 
   ResponsiveContainer,
-  LineChart,
-  Line,
   Legend,
   AreaChart,
   Area
 } from "recharts";
-import { TrendingUp, Users, Calendar, Target, FileText, Building, DollarSign, Clock } from "lucide-react";
+import { TrendingUp, Users, Calendar, Target, FileText, Building, DollarSign, Award, Mail, Lightbulb, CheckCircle } from "lucide-react";
+import axios from "axios";
 
 // Professional, subdued color palette
 const COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#1e293b", "#334155"];
@@ -27,14 +25,23 @@ const StartupDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get("https://incu-meta-backend.onrender.com/api/user/dashboard-stats");
-        setStats(res.data);
+        const res = await axios.get("http://localhost:3000/api/user/dashboard-stats");
+        // Flatten the nested structure for easier access
+        const { startup, stats: apiStats } = res.data;
+        setStats({
+          ...startup,
+          totalEvents: apiStats.totalEvents,
+          totalAnnouncements: apiStats.totalAnnouncements,
+          nextEvent: apiStats.nextEvent
+        });
         setLoading(false);
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
+        setError("Failed to load dashboard data");
+        setLoading(false);
       }
     };
 
@@ -42,7 +49,6 @@ const StartupDashboard = () => {
   }, []);
 
   // Generate monthly revenue data based on current revenue
-  // Note: In production, this should come from your API
   const generateMonthlyData = (revenue) => {
     if (!revenue) return [];
     
@@ -100,22 +106,36 @@ const StartupDashboard = () => {
   const monthlyRevenueData = generateMonthlyData(stats.revenue);
   const industryData = generateIndustryData(stats.industry);
   
-  // Format creation date
-  const formattedDate = stats.accountCreated ? new Date(stats.accountCreated).toLocaleDateString() : "N/A";
+  // Format dates
+  const formattedJoinDate = stats.joinedOn ? new Date(stats.joinedOn).toLocaleDateString() : "N/A";
+  const formattedEventDate = stats.nextEvent?.date ? new Date(stats.nextEvent.date).toLocaleDateString() : "N/A";
+  
+  // Get total funding amount
+  const totalFunding = stats.previousFunding?.reduce((sum, funding) => sum + funding.amount, 0) || 0;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">{stats.name} Dashboard</h1>
-          <p className="text-gray-600 mt-2">Performance overview and key metrics</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">{stats.name} Dashboard</h1>
+              <p className="text-gray-600 mt-2">Performance overview and key metrics</p>
+            </div>
+            {stats.isApproved && (
+              <div className="flex items-center gap-2 bg-green-100 text-green-700 px-4 py-2 rounded-full">
+                <CheckCircle className="h-5 w-5" />
+                <span className="font-medium">Approved</span>
+              </div>
+            )}
+          </div>
         </header>
         
-        {/* Quick Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+        {/* Company Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
           <Card className="shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium">Company Details</CardTitle>
+              <CardTitle className="text-lg font-medium">Company Info</CardTitle>
               <Building className="text-gray-600 h-5 w-5" />
             </CardHeader>
             <CardContent>
@@ -125,17 +145,46 @@ const StartupDashboard = () => {
                   <span className="font-medium">{stats.industry || "Not specified"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Email:</span>
-                  <span className="font-medium">{stats.email}</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-gray-500">Funding Stage:</span>
                   <span className="font-medium">{stats.fundingStage || "Not specified"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Account Created:</span>
-                  <span className="font-medium">{formattedDate}</span>
+                  <span className="text-gray-500">Team Size:</span>
+                  <span className="font-medium">{stats.teamSize || 0} members</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Joined On:</span>
+                  <span className="font-medium">{formattedJoinDate}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg font-medium">Contact</CardTitle>
+              <Mail className="text-gray-600 h-5 w-5" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-gray-500 text-sm">Company Email:</span>
+                  <p className="font-medium break-all">{stats.email}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 text-sm">Documents:</span>
+                  <p className="font-medium">{stats.documents?.length || 0} uploaded</p>
+                </div>
+                {stats.pitchDeckURL && (
+                  <a 
+                    href={stats.pitchDeckURL} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 text-sm underline"
+                  >
+                    View Pitch Deck
+                  </a>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -152,30 +201,37 @@ const StartupDashboard = () => {
                   <span className="font-medium">{stats.totalEvents}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Total Announcements:</span>
+                  <span className="text-gray-500">Announcements:</span>
                   <span className="font-medium">{stats.totalAnnouncements}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Upcoming Event:</span>
-                  <span className="font-medium">{stats.upcomingEvent}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
         
-        {/* Summary Stats Cards */}
+        {/* Financial Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
           <Card className="shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium">Total Revenue</CardTitle>
+              <CardTitle className="text-lg font-medium">Annual Revenue</CardTitle>
               <DollarSign className="text-gray-600 h-5 w-5" />
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline justify-between">
-                <p className="text-2xl font-bold">${stats.revenue ? stats.revenue.toLocaleString() : "0"}</p>
+                <p className="text-3xl font-bold">${stats.revenue ? stats.revenue.toLocaleString() : "0"}</p>
               </div>
-              <p className="text-xs text-gray-500 mt-2">Annual revenue</p>
+              <p className="text-xs text-gray-500 mt-2">Current annual revenue</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg font-medium">Total Funding</CardTitle>
+              <Award className="text-gray-600 h-5 w-5" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">${totalFunding.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mt-2">{stats.previousFunding?.length || 0} funding rounds</p>
             </CardContent>
           </Card>
           
@@ -185,32 +241,139 @@ const StartupDashboard = () => {
               <Users className="text-gray-600 h-5 w-5" />
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{stats.teamSize || 0}</p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <p className="text-3xl font-bold">{stats.teamSize || 0}</p>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
                 <div className="bg-gray-600 h-2 rounded-full" style={{ width: `${Math.min((stats.teamSize || 0) * 10, 100)}%` }}></div>
               </div>
-              <p className="text-xs text-gray-500 mt-2">Team members</p>
+              <p className="text-xs text-gray-500 mt-2">Total team members</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Business Summary & Innovation */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg font-medium">Business Summary</CardTitle>
+              <Target className="text-gray-600 h-5 w-5" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 text-sm leading-relaxed">{stats.businessSummary || "No summary provided"}</p>
             </CardContent>
           </Card>
           
           <Card className="shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium">Platform Events</CardTitle>
-              <Calendar className="text-gray-600 h-5 w-5" />
+              <CardTitle className="text-lg font-medium">Innovation Proof</CardTitle>
+              <Lightbulb className="text-gray-600 h-5 w-5" />
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{stats.totalEvents || 0}</p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div className="bg-gray-700 h-2 rounded-full" style={{ width: `${Math.min((stats.totalEvents || 0) * 10, 100)}%` }}></div>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Available events</p>
+              <p className="text-gray-700 text-sm leading-relaxed">{stats.innovationProof || "No innovation proof provided"}</p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Founders Information */}
+        {stats.founders && stats.founders.length > 0 && (
+          <Card className="shadow-sm hover:shadow-md transition-shadow mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Founders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {stats.founders.map((founder) => (
+                  <div key={founder._id} className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gray-600 text-white rounded-full h-10 w-10 flex items-center justify-center font-bold">
+                        {founder.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">{founder.name}</p>
+                        <p className="text-sm text-gray-600">{founder.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Previous Funding Rounds */}
+        {stats.previousFunding && stats.previousFunding.length > 0 && (
+          <Card className="shadow-sm hover:shadow-md transition-shadow mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Previous Funding Rounds</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {stats.previousFunding.map((funding) => (
+                  <div key={funding._id} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-800">{funding.round}</p>
+                      <p className="text-sm text-gray-600">{funding.investor}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-lg text-gray-800">${funding.amount.toLocaleString()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Next Event Information */}
+        {stats.nextEvent && (
+          <Card className="shadow-sm hover:shadow-md transition-shadow mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Upcoming Event</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-lg">
+                <h3 className="text-xl font-bold text-gray-800 mb-2">{stats.nextEvent.title}</h3>
+                <p className="text-gray-700 mb-4">{stats.nextEvent.description}</p>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Calendar className="h-4 w-4" />
+                  <span className="font-medium">{formattedEventDate}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Documents */}
+        {stats.documents && stats.documents.length > 0 && (
+          <Card className="shadow-sm hover:shadow-md transition-shadow mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Uploaded Documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {stats.documents.map((doc) => (
+                  <div key={doc._id} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-gray-600" />
+                      <span className="font-medium text-gray-800">{doc.type}</span>
+                    </div>
+                    <a 
+                      href={doc.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      View
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         {/* Charts Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Revenue Trend (based on estimated monthly revenue) */}
+          {/* Revenue Trend */}
           <Card className="shadow-sm hover:shadow-md transition-shadow col-span-2">
             <CardHeader>
               <CardTitle>Estimated Revenue vs Expenses</CardTitle>

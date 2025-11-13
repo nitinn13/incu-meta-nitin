@@ -1,33 +1,33 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 import { 
   PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, LineChart, Line, Cell
+  Tooltip, Legend, ResponsiveContainer, Cell
 } from "recharts";
 import { Users, DollarSign, Calendar, MessageSquare, Building, TrendingUp } from "lucide-react";
 
 const AdminDashboard = () => {
-  const { admin } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!admin?.token) {
-        toast.error("Admin token missing");
-        return;
-      }
-
       try {
-        const res = await fetch("https://incu-meta-backend.onrender.com/api/admin/dashboard-stats", {
-          headers: { token: admin.token },
+        const res = await fetch("http://localhost:3000/api/admin/dashboard-stats", {
+          headers: { 
+            token: localStorage.getItem('adminToken') || ''
+          },
         });
         const data = await res.json();
-        setStats(data);
+        
+        if (data.stats) {
+          setStats(data.stats);
+        } else {
+          setError("Invalid data format");
+        }
       } catch (err) {
-        toast.error("Failed to load dashboard stats");
+        setError("Failed to load dashboard stats");
         console.error(err);
       } finally {
         setLoading(false);
@@ -35,7 +35,7 @@ const AdminDashboard = () => {
     };
 
     fetchStats();
-  }, [admin?.token]);
+  }, []);
 
   if (loading) return (
     <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -49,9 +49,9 @@ const AdminDashboard = () => {
     </div>
   );
 
-  if (!stats) return (
+  if (error || !stats) return (
     <div className="flex items-center justify-center h-screen bg-gray-50">
-      <div className="text-lg font-medium text-gray-600">No stats available</div>
+      <div className="text-lg font-medium text-gray-600">{error || "No stats available"}</div>
     </div>
   );
 
@@ -64,22 +64,8 @@ const AdminDashboard = () => {
   const fundingStageData = stats.fundingStageBreakdown.map((stage, index) => ({
     name: stage._id,
     value: stage.count,
-    // Generate professional, muted colors
     color: `hsl(${210 + index * 30}, 20%, ${45 + index * 5}%)`
   }));
-
-  // Monthly startup growth data (mock data since we only have the current month)
-  const monthlyGrowthData = [
-    { month: "Jan", startups: Math.floor(stats.startupsThisMonth * 0.4) },
-    { month: "Feb", startups: Math.floor(stats.startupsThisMonth * 0.5) },
-    { month: "Mar", startups: Math.floor(stats.startupsThisMonth * 0.7) },
-    { month: "Apr", startups: Math.floor(stats.startupsThisMonth * 0.8) },
-    { month: "May", startups: Math.floor(stats.startupsThisMonth * 0.9) },
-    { month: "Current", startups: stats.startupsThisMonth }
-  ];
-
-  // Professional, subdued color palette
-  const COLORS = ["#4B5563", "#64748B", "#6B7280", "#4B5563", "#374151", "#1F2937"];
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gray-50 min-h-screen">
@@ -136,8 +122,8 @@ const AdminDashboard = () => {
           <CardContent className="pt-5">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Upcoming Events</p>
-                <h3 className="text-xl font-semibold mt-1 text-gray-800">{stats.upcomingEvents}</h3>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Events</p>
+                <h3 className="text-xl font-semibold mt-1 text-gray-800">{stats.totalEvents}</h3>
               </div>
               <div className="bg-gray-100 p-2 rounded-md">
                 <Calendar className="h-5 w-5 text-gray-600" />
@@ -212,47 +198,12 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Monthly Growth & Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Monthly Startup Growth */}
-        <Card className="lg:col-span-2 bg-white shadow-sm border-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium text-gray-800">Monthly Startup Growth</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={monthlyGrowthData}
-                  margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="month" tick={{ fill: '#6B7280', fontSize: 12 }} />
-                  <YAxis tick={{ fill: '#6B7280', fontSize: 12 }} />
-                  <Tooltip 
-                    formatter={(value) => [`${value} Startups`, 'Count']}
-                    contentStyle={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '4px' }}
-                  />
-                  <Legend verticalAlign="bottom" height={36} />
-                  <Line
-                    type="monotone"
-                    dataKey="startups"
-                    stroke="#4B5563"
-                    activeDot={{ r: 6 }}
-                    strokeWidth={2}
-                    name="New Startups"
-                    dot={{ stroke: '#4B5563', strokeWidth: 1, fill: '#fff', r: 3 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
+      {/* Featured Stats & Activity Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Featured Stats */}
         <Card className="bg-white shadow-sm border-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium text-gray-800">Featured Stats</CardTitle>
+            <CardTitle className="text-base font-medium text-gray-800">Top Performers</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -273,30 +224,48 @@ const AdminDashboard = () => {
                 </div>
                 <p className="text-sm text-gray-600 mt-1">{stats.largestTeam?.teamSize} team members</p>
               </div>
-              
-              <div className="p-4 border border-gray-100 rounded-md bg-gray-50">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Activity Summary</p>
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 text-gray-500 mr-2" />
-                    <p className="text-sm text-gray-700">Meetings Today</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Activity Summary */}
+        <Card className="bg-white shadow-sm border-0">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium text-gray-800">Activity Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border border-gray-100 rounded-md bg-gray-50">
+                <div className="flex items-center">
+                  <Calendar className="h-5 w-5 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">Total Meetings</p>
+                    <p className="text-xs text-gray-500">Scheduled meetings</p>
                   </div>
-                  <p className="font-medium text-gray-800">{stats.meetingsToday}</p>
                 </div>
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex items-center">
-                    <MessageSquare className="h-4 w-4 text-gray-500 mr-2" />
-                    <p className="text-sm text-gray-700">Recent Announcements</p>
+                <p className="text-xl font-semibold text-gray-800">{stats.totalMeetings}</p>
+              </div>
+
+              <div className="flex items-center justify-between p-4 border border-gray-100 rounded-md bg-gray-50">
+                <div className="flex items-center">
+                  <MessageSquare className="h-5 w-5 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">Announcements</p>
+                    <p className="text-xs text-gray-500">Total announcements</p>
                   </div>
-                  <p className="font-medium text-gray-800">{stats.announcementsLast30Days}</p>
                 </div>
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex items-center">
-                    <Building className="h-4 w-4 text-gray-500 mr-2" />
-                    <p className="text-sm text-gray-700">New Startups (Month)</p>
+                <p className="text-xl font-semibold text-gray-800">{stats.totalAnnouncements}</p>
+              </div>
+
+              <div className="flex items-center justify-between p-4 border border-gray-100 rounded-md bg-gray-50">
+                <div className="flex items-center">
+                  <Users className="h-5 w-5 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">Total Admins</p>
+                    <p className="text-xs text-gray-500">Platform administrators</p>
                   </div>
-                  <p className="font-medium text-gray-800">{stats.startupsThisMonth}</p>
                 </div>
+                <p className="text-xl font-semibold text-gray-800">{stats.totalAdmins}</p>
               </div>
             </div>
           </CardContent>

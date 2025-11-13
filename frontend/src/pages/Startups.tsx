@@ -7,17 +7,18 @@ import { Link } from "react-router-dom";
 import { Search, Building, Briefcase, Mail, TrendingUp, Users, Calendar, Filter } from "lucide-react";
 
 const Startups = () => {
-  const { admin } = useAuth();
+  // const { admin } = useAuth();
   const [search, setSearch] = useState("");
   const [startups, setStartups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("name");
   const [filterStage, setFilterStage] = useState("all");
+  const adminToken = localStorage.getItem("adminToken")
 
   useEffect(() => {
     const fetchStartups = async () => {
-      if (!admin?.token) {
-        console.warn("Admin token missing", admin);
+      if (!adminToken) {
+        console.warn("Admin token missing", adminToken);
         toast.error("Admin token missing");
         return;
       }
@@ -25,9 +26,9 @@ const Startups = () => {
       setLoading(true);
 
       try {
-        const response = await fetch("https://incu-meta-backend.onrender.com/api/admin/all-startups", {
+        const response = await fetch("http://localhost:3000/api/admin/all-startups", {
           headers: {
-            token: admin.token,
+            token: adminToken,
           },
         });
 
@@ -49,7 +50,7 @@ const Startups = () => {
     };
 
     fetchStartups();
-  }, [admin?.token]);
+  }, [adminToken]);
 
   // Get unique funding stages for filter dropdown
   const fundingStages = ["all", ...new Set(startups.map(startup => startup.fundingStage))];

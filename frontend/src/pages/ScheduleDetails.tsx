@@ -32,18 +32,19 @@ type Schedule = {
 
 const ScheduleDetails = () => {
   const { id } = useParams();
-  const { admin } = useAuth();
+  // const { admin } = useAuth();
+  const adminToken = localStorage.getItem("adminToken");
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchScheduleDetails = async () => {
-      if (!admin?.token || !id) return;
+      if (!adminToken || !id) return;
 
       try {
-        const response = await fetch(`https://incu-meta-backend.onrender.com/api/admin/all-schedules`, {
+        const response = await fetch(`http://localhost:3000/api/admin/all-schedules`, {
           headers: {
-            token: admin.token,
+            token: adminToken,
           },
         });
 
@@ -64,7 +65,7 @@ const ScheduleDetails = () => {
     };
 
     fetchScheduleDetails();
-  }, [admin?.token, id]);
+  }, [adminToken, id]);
 
   // Format date as "Monday, January 1, 2023"
   const formatDate = (dateString: string) => {
